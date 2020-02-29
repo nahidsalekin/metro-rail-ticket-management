@@ -1,0 +1,305 @@
+<!DOCTYPE html> {% extends 'header.html' %} {% load static %} {% block body %}
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+
+    <style>
+        #map_canvas {
+            width: 100%;
+            height: 450px;
+            margin: 0 auto;
+        }
+        
+        .full-content {
+            display: flex;
+            width: 100%;
+            margin: 0 auto;
+            flex-wrap: wrap-reverse;
+            filter: blur(0);
+        }
+        
+        .card-body {
+            padding-bottom: 0;
+        }
+        
+        .location-form {
+            background-color: rgb(255, 255, 255);
+            margin-top: 20px;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+        
+        .card-body label {
+            color: black;
+        }
+        
+        .place-list {
+            margin-top: 20px;
+            max-width: 250px;
+            min-width: 200px;
+            margin-bottom: 20px;
+            max-height: 250px;
+        }
+        
+        .place {
+            overflow-y: auto;
+        }
+        
+        .place p {
+            margin-left: 5px;
+        }
+        
+        h5 {
+            text-align: center;
+            color: white;
+            display: none;
+            margin-top: 0;
+            margin-bottom: 0;
+            font-style: italic;
+        }
+        
+        .delete {
+            border: none;
+            padding: 0;
+        }
+        
+        .blur>*:not(#toast-not-blur) {
+            filter: blur(4px);
+            -webkit-filter: blur(4px);
+            -moz-filter: blur(4px);
+            -o-filter: blur(4px);
+            -ms-filter: blur(4px);
+            cursor: not-allowed;
+        }
+        
+        .toast-area {
+            width: 0;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="full-content d-flex justify-content-around" id="test">
+
+        <div class="location-form border card">
+            {% if messages %} {% for message in messages %}
+            <div class="alert alert-success alert-dismissible fade show">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <strong>Success!</strong> New Station Has Been Added.
+            </div> {% endfor %}
+            <script>
+                $(".alert").fadeIn(500, function() {
+                    $(".alert").fadeOut(3500);
+
+                });
+            </script>
+            {% endif %}
+            <div class="card-header bg-dark text-white">
+                <h4>Add Station From Map</h4>
+            </div>
+            <form class="card-body" method="post" action="/add_location/">
+                {% csrf_token %}
+                <div class="form-group row">
+                    <label for="lat" class="col-sm-2 col-form-label">Area:</label>
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" name="name" id="address" required>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="lat" class="col-sm-2 col-form-label">Lattitude:</label>
+                    <div class="col-sm-4">
+                        <input type="text" class="form-control" name="lat" id="lat" required>
+                    </div>
+
+                    <label for="lng" class="col-sm-2 col-form-label">Longitude:</label>
+                    <div class="col-sm-4">
+                        <input type="text" class="form-control" name="lng" id="lng" required>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <div class="col-sm-10">
+                        <button type="submit" onclick="location()" class="btn btn-danger">Add</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="place-list border card">
+            {% csrf_token %}
+            <div class="card-header bg-success text-white text-center">
+                <h6>Available Places</h6>
+            </div>
+            <div class="place">
+                {% for data in all_info %}
+                <p> <button onclick="remove_place()" class="delete"><img src="https://img.icons8.com/office/16/000000/delete-sign.png"></button> &nbsp; {{ data.name }}</p>
+                {% endfor %}
+            </div>
+        </div>
+        <div id="toast-not-blur" aria-live="polite" aria-atomic="true" class="d-flex justify-content-center align-items-center toast-area position-absolute" style="min-height: 200px;">
+            <!-- Then put toasts within -->
+            <div class="toast" data-autohide="false" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <strong class="mr-auto text-primary">Remove Place</strong>
+                    <button type="button" class="ml-2 mb-1 close" onclick="cancel()" data-dismiss="toast">&times;</button>
+                </div>
+                <div class="toast-body">
+                    <p>Are You Sure to Remove this Place From the List? </p>
+                    <div class="confirm d-flex justify-content-end">
+                        <button type="button" onclick="cancel()" data-dismiss="toast" class="btn btn-outline-primary btn-sm">Cancel</button>
+                        <button type="button" onclick="remove()" data-dismiss="toast" class="btn btn-outline-danger btn-sm ml-2">Yes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        var index = -1;
+
+        function remove_place() {
+            var location = document.getElementById("test");
+            location.classList.add("blur");
+            var map = document.getElementById("map_canvas");
+            map.classList.add("blur");
+
+            var toast_area = document.getElementById("toast-not-blur");
+            toast_area.classList.remove("toast-area");
+
+            $('.toast').toast('show');
+
+            var item = document.querySelectorAll(".place p"),
+                item_arr = [];
+            for (var i = 0; i < item.length; i++) {
+                item_arr.push(item[i].innerHTML);
+            }
+            for (var i = 0; i < item.length; i++) {
+                item[i].onclick = function() {
+                    index = item_arr.indexOf(this.innerHTML);
+                };
+            }
+
+        }
+
+        function cancel() {
+            var location = document.getElementById("test");
+            location.classList.remove("blur");
+            var map = document.getElementById("map_canvas");
+            map.classList.remove("blur");
+        }
+
+        function remove() {
+            var location = document.getElementById("test");
+            location.classList.remove("blur");
+            var map = document.getElementById("map_canvas");
+            map.classList.remove("blur");
+
+            if (index != -1) {
+                var item = document.querySelectorAll(".place p");
+                var curr_place = item[index].textContent;
+                curr_place = curr_place.slice(4, curr_place.length);
+                //button icon is taking upto 4 spaces on array, so skipping this
+                item[index].parentNode.removeChild(item[index]);
+
+                //if json.Stringyfy is used, the text will appear in python with double quotation
+                $.ajax({
+                    url: '/remove/',
+                    type: 'POST',
+                    data: {
+                        'curr_place': curr_place
+                    },
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    success: function(data) {
+                        //
+                    },
+                    failure: function(data) {
+                        alert('Got an error! Please Try Later.');
+                    }
+
+                });
+            }
+        }
+    </script>
+    <input type="text" id="search">
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&libraries=places"></script>
+    <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?key=AIzaSyCGKxpbDZt-KFF6DRvJtqGC2saTW8x9cyc&callback=initMap"></script>
+
+    <div id="map_canvas"></div>
+    <script>
+        var map;
+        var geocoder;
+        var mapOptions = {
+            center: new google.maps.LatLng(0.0, 0.0),
+            zoom: 3,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+        };
+
+        function initialize() {
+
+            var input = document.getElementById('search');
+            new google.maps.places.Autocomplete(input);
+
+            google.maps.event.addDomListener(window, 'load', initialize);
+            var myOptions = {
+                center: new google.maps.LatLng(23.788860723907213, 90.40343650966477),
+                zoom: 10,
+                mapTypeId: google.maps.MapTypeId.ROADMAP
+            };
+
+            geocoder = new google.maps.Geocoder();
+            var map = new google.maps.Map(document.getElementById("map_canvas"),
+                myOptions);
+            google.maps.event.addListener(map, 'click', function(event) {
+                placeMarker(event.latLng);
+            });
+
+            var marker;
+
+            function placeMarker(location) {
+                if (marker) {
+                    marker.setPosition(location);
+                } else {
+                    marker = new google.maps.Marker({
+                        position: location,
+                        map: map
+                    });
+                }
+                document.getElementById('lat').value = location.lat();
+                document.getElementById('lng').value = location.lng();
+                getAddress(location);
+            }
+
+            function getAddress(latLng) {
+                geocoder.geocode({
+                        'latLng': latLng
+                    },
+                    function(results, status) {
+                        if (status == google.maps.GeocoderStatus.OK) {
+                            if (results[0]) {
+                                document.getElementById("address").value = results[0].formatted_address;
+                            } else {
+                                document.getElementById("address").value = "No results";
+                            }
+                        } else {
+                            document.getElementById("address").value = status;
+                        }
+                    });
+            }
+        }
+        google.maps.event.addDomListener(window, 'load', initialize);
+    </script>
+
+</body>
+{% endblock %}
+
+</html>

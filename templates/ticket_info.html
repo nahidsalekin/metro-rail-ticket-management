@@ -1,0 +1,95 @@
+<!DOCTYPE html> {% extends 'header.html' %} {% load static %} {% block body %}
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .full-content {
+            width: 50%;
+            margin: 0 auto;
+        }
+        
+        .col-sm-4 {
+            padding-right: 0;
+            padding-left: 0;
+            width: 100%;
+        }
+        
+        .btn {
+            margin-left: 25px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="full-content justify-content-around mt-4" id="test">
+        <div class="ticket-form border card">
+
+            <div class="card-header bg-dark text-white">
+                <h4>Current Ticket Details</h4>
+            </div>
+            <form class="card-body" method="post" action="/update_price/">
+                {% csrf_token %}
+
+                <div class="form-group row mx-auto">
+                    <label for="sel1" class="col-sm-3 col-form-label">Class Type:</label>
+                    <select class="form-control col-sm-4" id="sel1" name="class_type" onmouseout="update()">
+                  <option disabled selected>Select a Class Type</option>
+                  <option value="tourist">Tourist</option>
+                  <option value="student">Student</option>
+                  <option value="category a">Category A</option>
+                  <option value="category b">Category B</option>
+                </select>
+                </div>
+                <div class="form-group row  mx-auto">
+                    <label for="slots" class="col-sm-3 col-form-label">Total Slots:</label>
+                    <div class="col-sm-4">
+                        <input type="text" class="form-control" name="slots" id="slots">
+                    </div>
+                </div>
+                <div class="form-group row  mx-auto">
+                    <label for="price" class="col-sm-3 col-form-label">Price(per km):</label>
+                    <div class="col-sm-4">
+                        <input type="text" class="form-control" name="price" id="price" required>
+                    </div>
+                </div>
+
+                <div class="form-group row d-flex justify-content-start">
+                    <!-- <button type="button" onclick="update()" class="btn btn-info">Current Price</button> -->
+                    <button type="submit" class="btn btn-success">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <script>
+        function update() {
+            var data1 = $('#sel1').find(":selected").val();
+            $.ajax({
+                url: '/current_price/',
+                type: 'POST',
+                data: {
+                    'data1': data1
+                },
+                dataType: "json",
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                success: function(data) {
+                    data = JSON.parse(data);
+                    document.getElementById("price").value = data.price;
+                    document.getElementById("slots").value = data.slots;
+                },
+                failure: function(data) {
+                    alert('Got an error! Please Try Later.');
+                }
+
+            });
+        }
+    </script>
+</body>
+{% endblock %}
+
+</html>

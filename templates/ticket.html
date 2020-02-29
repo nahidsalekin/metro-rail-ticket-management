@@ -1,0 +1,435 @@
+<!DOCTYPE html> {% extends 'header.html' %} {% load static %} {% block body %}
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+
+    <title>Purchase Ticket</title>
+    <link href="https://fonts.googleapis.com/css?family=Raleway:400,700" rel="stylesheet">
+    <link href="{% static 'style.css' %}" rel="stylesheet">
+    <link type="text/css" rel="stylesheet" href="{% static 'ticket_style.css' %}" />
+
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font: 16px Arial;
+        }
+        /*the container must be positioned relative:*/
+        
+        .autocomplete {
+            position: relative;
+            display: inline-block;
+        }
+        
+        input {
+            border: 1px solid transparent;
+            background-color: #f1f1f1;
+            padding: 10px;
+            font-size: 16px;
+        }
+        
+        input[type=text] {
+            background-color: #f1f1f1;
+            width: 100%;
+        }
+        
+        input[type=submit] {
+            background-color: DodgerBlue;
+            color: #fff;
+            cursor: pointer;
+        }
+        
+        .autocomplete-items {
+            position: absolute;
+            border: 1px solid #d4d4d4;
+            border-bottom: none;
+            border-top: none;
+            z-index: 99;
+            /*position the autocomplete items to be the same width as the container:*/
+            top: 100%;
+            left: 0;
+            right: 0;
+        }
+        
+        .autocomplete-items div {
+            padding: 10px;
+            cursor: pointer;
+            background-color: #fff;
+            border-bottom: 1px solid #d4d4d4;
+        }
+        /*when hovering an item:*/
+        
+        .autocomplete-items div:hover {
+            background-color: #e9e9e9;
+        }
+        /*when navigating through the items using the arrow keys:*/
+        
+        .autocomplete-active {
+            background-color: DodgerBlue !important;
+            color: #ffffff;
+        }
+        
+        .disable-btn {
+            background-color: dimgray;
+            cursor: not-allowed;
+        }
+        
+        .blur>*:not(#toast-not-blur) {
+            filter: blur(4px);
+            -webkit-filter: blur(4px);
+            -moz-filter: blur(4px);
+            -o-filter: blur(4px);
+            -ms-filter: blur(4px);
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body class="form-body" id="form-body">
+    <div id="booking" class="section">
+        <div class="section-center">
+            <div class="container">
+                <div class="row">
+                    <div class="booking-form">
+                        <div class="form-header">
+                            <h1>Check Ticket Availability</h1>
+                        </div>
+                        <form method="POST" action="/purchase_ticket/">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <input class="form-control" type="text" id="start_point" name="start_point" onfocus="input_validity()" placeholder="Starting Point" autocomplete="off">
+                                        <span class="form-label">Starting Point</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <input class="form-control" type="text" id="destination" name="destination" onfocus="input_validity()" placeholder="Destination" autocomplete="off">
+                                        <span class="form-label">Destination</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <input class="form-control" type="date" name="date" id="date" required>
+                                        <span class="form-label">Date</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <input class="form-control" type="time" name="time" id="time" required>
+                                        <span class="form-label">Time</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <select class="form-control" name="tickets" id="tickets" required>
+											<option value="" selected hidden>No. of Tickets</option>
+											<option value="1">1</option>
+											<option value="2">2</option>
+                                            <option value="3">3</option>
+                                            <option value="4">4</option>
+										</select>
+                                        <span class="select-arrow"></span>
+                                        <span class="form-label">Number of Tickets</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <select class="form-control" name="class_type" id="class_type" required>
+											<option value="" selected hidden>Passenger Type</option>
+											<option selected>Any</option>
+											<option value="student">Student</option>
+                                            <option value="tourist">Tourist</option>
+                                            <option value="category a">Category A</option>
+                                            <option value="category b">Category A</option>
+										</select>
+                                        <span class="select-arrow"></span>
+                                        <span class="form-label">Class</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row justify-content-center">
+                                <div class="col-md-4">
+                                    <div class="form-btn">
+                                        <button id="check" type="button" onclick="available_ticket()" class="submit-btn">Check</button>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-btn">
+                                        <button id="purchase" type="submit" class="submit-btn">Purchase</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="toast-not-blur" aria-live="polite" aria-atomic="true" class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
+            <!-- Then put toasts within -->
+            <div class="toast" data-autohide="false" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <strong class="mr-auto text-primary">Remove Place</strong>
+                    <button type="button" class="ml-2 mb-1 close" onclick="cancel()" data-dismiss="toast">&times;</button>
+                </div>
+                <div class="toast-body">
+                    <p>Here are your queries </p>
+                    <div class="confirm d-flex justify-content-end">
+                        <button type="button" onclick="cancel()" data-dismiss="toast" class="btn btn-outline-primary btn-sm">Ok</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+
+    {% block javascript %}
+
+    <script>
+        function available_ticket() {
+            $('.toast').toast('show');
+            var form = document.getElementById("booking");
+            form.classList.add("blur");
+
+            var start_point = document.getElementById("start_point").value;
+            var destination = document.getElementById("destination").value;
+            var date = document.getElementById("date").value;
+            var tickets = $('#tickets').find(":selected").val();
+            var class_type = $('#class_type').find(":selected").val();
+            $.ajax({
+                url: '/ticket_availability/',
+                type: 'POST',
+                data: {
+                    'start_point': start_point,
+                    'destination': destination,
+                    'date': date,
+                    'class_type': class_type
+                },
+                dataType: "json",
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                success: function(data) {
+                    data = JSON.parse(data);
+                    alert(data);
+                    // document.getElementById("price").value = data.price;
+                    // document.getElementById("slots").value = data.slots;
+                },
+                failure: function(data) {
+                    alert('Got an error! Please Try Later.');
+                }
+
+            });
+
+
+        }
+
+        function cancel() {
+            var form = document.getElementById("booking");
+            form.classList.remove("blur");
+        }
+
+        function input_validity() {
+            var start_point = document.getElementById("start_point").value;
+            var destination = document.getElementById("destination").value;
+            var check = document.getElementById('check');
+            var purchase = document.getElementById('purchase');
+
+            if (start_point == destination) {
+                check.disabled = true;
+                check.classList.add("disable-btn");
+                purchase.disabled = true;
+                purchase.classList.add("disable-btn");
+            } else {
+                check.disabled = false;
+                check.classList.remove("disable-btn");
+                purchase.disabled = false;
+                purchase.classList.remove("disable-btn");
+            }
+        }
+
+        function autocomplete(inp, arr) {
+
+            var currentFocus;
+            inp.addEventListener("click", function() {
+                var a, b, i, val = this.value;
+                closeAllLists();
+                if (val) {
+                    return false;
+                }
+                currentFocus = -1;
+                a = document.createElement("DIV");
+                a.setAttribute("id", this.id + "autocomplete-list");
+                a.setAttribute("class", "autocomplete-items");
+                this.parentNode.appendChild(a);
+                for (i = 0; i < arr.length; i++) {
+                    b = document.createElement("DIV");
+                    b.innerHTML = "<strong>" + arr[i] + "</strong>";
+                    b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
+                    b.addEventListener("click", function(e) {
+                        inp.value = this.getElementsByTagName("input")[0].value;
+                        closeAllLists();
+                    });
+                    a.appendChild(b);
+                }
+            });
+
+            inp.addEventListener("input", function(e) {
+                var a, b, i, val = this.value;
+                closeAllLists();
+                currentFocus = -1;
+                a = document.createElement("DIV");
+                a.setAttribute("id", this.id + "autocomplete-list");
+                a.setAttribute("class", "autocomplete-items");
+                /*append the DIV element as a child of the autocomplete container:*/
+                this.parentNode.appendChild(a);
+                if (!val) {
+                    return false;
+                }
+
+
+                /*for each item in the array...*/
+                for (i = 0; i < arr.length; i++) {
+                    /*check if the item starts with the same letters as the text field value:*/
+                    if (arr[i].substr(0, val.length).toUpperCase() == val.toUpperCase()) {
+                        /*create a DIV element for each matching element:*/
+                        b = document.createElement("DIV");
+                        /*make the matching letters bold:*/
+                        b.innerHTML = "<strong>" + arr[i].substr(0, val.length) + "</strong>";
+                        b.innerHTML += arr[i].substr(val.length);
+                        /*insert a input field that will hold the current array item's value:*/
+                        b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
+                        /*execute a function when someone clicks on the item value (DIV element):*/
+                        b.addEventListener("click", function(e) {
+                            /*insert the value for the autocomplete text field:*/
+                            inp.value = this.getElementsByTagName("input")[0].value;
+                            /*close the list of autocompleted values,
+                            (or any other open lists of autocompleted values:*/
+                            closeAllLists();
+                        });
+                        a.appendChild(b);
+                    }
+                }
+            });
+            /*execute a function presses a key on the keyboard:*/
+            inp.addEventListener("keydown", function(e) {
+                var x = document.getElementById(this.id + "autocomplete-list");
+                if (x) x = x.getElementsByTagName("div");
+                if (e.keyCode == 40) {
+                    /*If the arrow DOWN key is pressed,
+                    increase the currentFocus variable:*/
+                    currentFocus++;
+                    /*and and make the current item more visible:*/
+                    addActive(x);
+                } else if (e.keyCode == 38) { //up
+                    /*If the arrow UP key is pressed,
+                    decrease the currentFocus variable:*/
+                    currentFocus--;
+                    /*and and make the current item more visible:*/
+                    addActive(x);
+                } else if (e.keyCode == 13) {
+                    /*If the ENTER key is pressed, prevent the form from being submitted,*/
+                    e.preventDefault();
+                    if (currentFocus > -1) {
+                        /*and simulate a click on the "active" item:*/
+                        if (x) x[currentFocus].click();
+                    }
+                }
+            });
+
+            function addActive(x) {
+                /*a function to classify an item as "active":*/
+                if (!x) return false;
+                /*start by removing the "active" class on all items:*/
+                removeActive(x);
+                if (currentFocus >= x.length) currentFocus = 0;
+                if (currentFocus < 0) currentFocus = (x.length - 1);
+                /*add class "autocomplete-active":*/
+                x[currentFocus].classList.add("autocomplete-active");
+            }
+
+            function removeActive(x) {
+                /*a function to remove the "active" class from all autocomplete items:*/
+                for (var i = 0; i < x.length; i++) {
+                    x[i].classList.remove("autocomplete-active");
+                }
+            }
+
+            function closeAllLists(elmnt) {
+                /*close all autocomplete lists in the document,
+                except the one passed as an argument:*/
+                var x = document.getElementsByClassName("autocomplete-items");
+                for (var i = 0; i < x.length; i++) {
+                    if (elmnt != x[i] && elmnt != inp) {
+                        x[i].parentNode.removeChild(x[i]);
+                    }
+                }
+            }
+            /*execute a function when someone clicks in the document:*/
+            document.addEventListener("click", function(e) {
+                // closeAllLists(e.target);
+                // this will remove all items even if the empty field try to show all place
+            });
+        }
+        var place;
+        $('#start_point').ready(function() {
+            var place = "none";
+            $.ajax({
+                url: '/show_place',
+                type: 'get',
+                dataType: 'json',
+                success: function(data) {
+                    place = JSON.parse(data);
+                    autocomplete(document.getElementById("start_point"), place);
+                    autocomplete(document.getElementById("destination"), place);
+                },
+                failure: function(data) {
+                    alert('Got an error dude!');
+                }
+            });
+
+        });
+    </script>
+
+
+    {% endblock %}
+
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script>
+        $('.form-control').each(function() {
+            floatedLabel($(this));
+        });
+
+        $('.form-control').on('input', function() {
+            floatedLabel($(this));
+        });
+
+        function floatedLabel(input) {
+            var $field = input.closest('.form-group');
+            if (input.val()) {
+                $field.addClass('input-not-empty');
+            } else {
+                $field.removeClass('input-not-empty');
+            }
+        }
+    </script>
+
+</body>
+<!-- This templates was made by Colorlib (https://colorlib.com) -->
+{% endblock %}
+
+</html>

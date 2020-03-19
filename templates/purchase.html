@@ -1,0 +1,122 @@
+<!DOCTYPE html> {% extends 'header.html' %} {% load static %} {% block body %}
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Purchase</title>
+    <link type="text/css" rel="stylesheet" href="{% static 'ticket_style.css' %}" />
+    <style>
+        .full-content {
+            width: 80%;
+            margin: 0 auto;
+            /* opacity: 0.5; */
+        }
+        
+        .col-sm-4 {
+            padding-right: 0;
+            padding-left: 0;
+            width: 100%;
+        }
+        
+        .btn {
+            margin-left: 25px;
+        }
+        
+        .table {
+            text-align: center;
+        }
+        
+        .table td {
+            padding: 10% 10px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .btn-success {
+            border-color: #ffffff;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="full-content justify-content-around mt-4" id="test">
+        <div class="ticket-form border card">
+            <div class="card-header bg-success text-white d-flex justify-content-between">
+                <h4>Ticket Details</h4>
+                <button type="button" onclick="book()" class="btn btn-success btn-sm text-right">Confirm</button>
+            </div>
+            <table class="table table-dark table-striped">
+                <thead>
+                    <tr>
+                        <th>From</th>
+                        <th>To</th>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>Quantity</th>
+                        <th>Passenger Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{from}}</td>
+                        <td>{{to}}</td>
+                        <td>{{date}}</td>
+                        <td>{{time}}</td>
+                        <td>{{seats}}</td>
+                        <td>.....</td>
+                    </tr>
+                </tbody>
+            </table>
+            <h6 class="bg-info text-right" style="margin: 0;">Total Cost: {{price}} tk&nbsp;</h6>
+        </div>
+    </div>
+
+    <script>
+        function book() {
+            var start_point = "{{ from }}";
+            var destination = "{{ to }}";
+            var date = "{{ date }}";
+            var time = "{{ time }}";
+            var seats = "{{ seats }}";
+            var seat_index = "{{ seat_index }}";
+            var quantity = "{{ quantity }}";
+            var passenger_type = "student";
+            var price = "{{ price }}";
+            var length = 6;
+            var id = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, length);
+
+            $.ajax({
+                url: '/confirm_booking/',
+                type: 'POST',
+                data: {
+                    'start_point': start_point,
+                    'destination': destination,
+                    'date': date,
+                    'class_type': passenger_type,
+                    'time': time,
+                    'quantity': quantity,
+                    'seat_index': seat_index,
+                    'price': price,
+                    'id': id
+                },
+                dataType: "json",
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                success: function(data) {},
+                failure: function(data) {
+                    alert('Got an error! Please Try Later.');
+                }
+
+            });
+            alert('Booking Successful.');
+
+        }
+    </script>
+
+</body>
+{% endblock %}
+
+</html>

@@ -5,9 +5,10 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
 
     <title>Purchase Ticket</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="https://kit.fontawesome.com/cf18cbc6fa.js" crossorigin="anonymous"></script>
     <link href="https://fonts.googleapis.com/css?family=Raleway:400,700" rel="stylesheet">
     <link href="{% static 'style.css' %}" rel="stylesheet">
     <link type="text/css" rel="stylesheet" href="{% static 'ticket_style.css' %}" />
@@ -89,19 +90,79 @@
             -ms-filter: blur(4px);
             cursor: not-allowed;
         }
+        
+        .seat {
+            width: 80%;
+            margin: 0 auto;
+            background-color: white;
+            /* display: flex; */
+            display: none;
+        }
+        
+        .section-1,
+        .section-2 {
+            width: 95%;
+            margin: 0 auto;
+            display: flex;
+            overflow-wrap: break-all;
+            word-wrap: break-all;
+            flex-wrap: wrap;
+            padding: 5px 10px;
+        }
+        
+        .section-1 img,
+        .section-2 img {
+            height: 60px;
+            width: 60px;
+            margin-right: 15px;
+            /* cursor: pointer; */
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+        
+        .unavailable-seat {
+            filter: grayscale(10);
+            cursor: not-allowed;
+            opacity: 0.5
+        }
+        
+        .selected-seat {
+            /* cursor: not-allowed; */
+            border: 5px solid #49b561;
+        }
+        
+        hr {
+            margin-top: 0;
+            margin-bottom: 5px;
+            border: 0;
+            border-top: 1px dashed rgb(49, 45, 45);
+        }
     </style>
 </head>
 
 <body class="form-body" id="form-body">
+    <div class="seat">
+        <div class="section-1" id="section-1">
+            {% for i in tickets %}
+            <img onclick="select_seat()" src="{% static 'img/seat-512.png' %}" title="A-{{i}}"> {%endfor%}
+        </div>
+        <hr>
+        <hr>
+        <div class="section-2" id="section-2">
+            {% for i in tickets %}
+            <img onclick="select_seat()" src="{% static 'img/seat-512.png' %}" title="B-{{i}}"> {%endfor%}
+        </div>
+    </div>
     <div id="booking" class="section">
         <div class="section-center">
             <div class="container">
+
                 <div class="row">
                     <div class="booking-form">
                         <div class="form-header">
                             <h1>Check Ticket Availability</h1>
                         </div>
-                        <form method="POST" action="/purchase_ticket/">
+                        <form method="POST" action="/purchase/">
                             {% csrf_token %}
                             <div class="row">
                                 <div class="col-md-6">
@@ -120,13 +181,26 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <input class="form-control" type="date" name="date" id="date" required>
+                                        <input class="form-control" type="date" data-date-format="YYYY MM DD" name="date" id="date" required>
                                         <span class="form-label">Date</span>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <input class="form-control" type="time" name="time" id="time" required>
+                                        <select class="form-control" name="time" id="time" required>
+											<option value="" selected hidden>Time</option>
+											<option value="07:00 AM">07:00 AM</option>
+                                            <option value="08:30 AM">08:30 AM</option>
+                                            <option value="10:00 AM">10:00 AM</option>
+                                            <option value="12:00 PM">12:00 PM</option>
+                                            <option value="02:00 PM">02:00 PM</option>
+                                            <option value="04:00 PM">04:00 PM</option>
+                                            <option value="06:00 PM">06:00 PM</option>
+                                            <option value="08:00 PM">08:00 PM</option>
+                                            <option value="09:00 PM">09:00 PM</option>
+                                            <option value="10:30 PM">10:30 PM</option>
+                                        </select>
+                                        <span class="select-arrow"></span>
                                         <span class="form-label">Time</span>
                                     </div>
                                 </div>
@@ -147,18 +221,24 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <select class="form-control" name="class_type" id="class_type" required>
+                                        <select class="form-control" name="class_type" id="class_type" required onmouseout="preferable()">
 											<option value="" selected hidden>Passenger Type</option>
-											<option selected>Any</option>
 											<option value="student">Student</option>
                                             <option value="tourist">Tourist</option>
                                             <option value="category a">Category A</option>
-                                            <option value="category b">Category A</option>
+                                            <option value="category b">Category B</option>
+                                            <option value="Custom Choice">Choose Preferable Seat</option>
 										</select>
                                         <span class="select-arrow"></span>
                                         <span class="form-label">Class</span>
                                     </div>
                                 </div>
+                            </div>
+
+                            <div class="hidden" style="display: none;">
+                                <input type="text" name="quantity" id="quantity">
+                                <input type="text" name="seat_no" id="seat_no">
+                                <input type="text" name="seat_index" id="seat_index">
                             </div>
 
                             <div class="row justify-content-center">
@@ -169,7 +249,7 @@
                                 </div>
                                 <div class="col-md-4">
                                     <div class="form-btn">
-                                        <button id="purchase" type="submit" class="submit-btn">Purchase</button>
+                                        <button id="purchase" onclick="add_selection()" type="submit" class="submit-btn">Purchase</button>
                                     </div>
                                 </div>
                             </div>
@@ -179,15 +259,18 @@
             </div>
         </div>
 
-        <div id="toast-not-blur" aria-live="polite" aria-atomic="true" class="d-flex justify-content-center align-items-center" style="min-height: 200px;">
+        <div id="toast-not-blur" aria-live="polite" aria-atomic="true" class="d-flex justify-content-center align-items-center" style="min-height: 200px;padding: 20px;">
             <!-- Then put toasts within -->
             <div class="toast" data-autohide="false" role="alert" aria-live="assertive" aria-atomic="true">
                 <div class="toast-header">
-                    <strong class="mr-auto text-primary">Remove Place</strong>
+                    <strong class="mr-auto text-primary">Result</strong>
                     <button type="button" class="ml-2 mb-1 close" onclick="cancel()" data-dismiss="toast">&times;</button>
                 </div>
                 <div class="toast-body">
-                    <p>Here are your queries </p>
+                    <p id="ticket"></p>
+                    <p id="distance"></p>
+                    <p id="price"></p>
+                    <p id="selected"></p>
                     <div class="confirm d-flex justify-content-end">
                         <button type="button" onclick="cancel()" data-dismiss="toast" class="btn btn-outline-primary btn-sm">Ok</button>
                     </div>
@@ -195,11 +278,167 @@
             </div>
         </div>
     </div>
+
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
 
     {% block javascript %}
 
     <script>
+        var count = 0;
+        var selected_seat = [];
+        var occupied_seat = [];
+        var date = new Date();
+        var current_time = date.toLocaleTimeString().replace(/(.*)\D\d+/, '$1');
+        var selectobject = document.getElementById("time");
+        for (var i = 0; i < selectobject.length; i++) {
+            if (get_minute(current_time) < get_minute(selectobject.options[i].value) && get_minute(selectobject.options[i].value) < get_minute("11:00 PM"))
+                var count = 0;
+            else
+                selectobject.remove(i);
+        }
+
+        function get_minute(actual_time) {
+            var time = actual_time.split(' ')[0];
+            var portion = actual_time.split(' ')[1];
+            var hour = parseInt(time.split(':')[0]);
+            var minute = parseInt(time.split(':')[1]);
+            if (portion == "PM" && hour < 12)
+                hour = hour + 12;
+
+            minute = minute + hour * 60;
+            return minute;
+        }
+
+        function add_selection() {
+            var seat = "";
+            var seat_index = "";
+            for (var i = 0; i < selected_seat.length; i++) {
+                if (selected_seat[i] > 25)
+                    seat = seat + "B-" + (selected_seat[i] - 26).toString() + ",";
+                else
+                    seat = seat + "A-" + (selected_seat[i]).toString() + ",";
+                seat_index = seat_index + (selected_seat[i]).toString() + ",";
+
+            }
+            document.getElementById("quantity").value = selected_seat.length;
+            document.getElementById("seat_no").value = seat;
+            document.getElementById("seat_index").value = seat_index;
+            var x = document.getElementById("quantity").value;
+        }
+
+
+        function seat_list(date, time) {
+            var g1 = document.getElementById('section-1');
+            var g2 = document.getElementById('section-2');
+            var item1 = document.querySelectorAll(".section-1 img"),
+                item1_arr = [];
+            var item2 = document.querySelectorAll(".section-2 img"),
+                item2_arr = [];
+            for (var i = 0; i < item1.length; i++) {
+                item1_arr.push(item1[i].innerHTML);
+            }
+            for (var i = 0; i < item2.length; i++) {
+                item2_arr.push(item2[i].innerHTML);
+            }
+            for (var i = 0, len = g1.children.length; i < len; i++) {
+
+                (function(index) {
+                    g1.children[i].onclick = function() {
+                        if (occupied_seat.includes(index)) {
+                            alert('This Seat is Not Available!');
+                        } else {
+                            if (count > 3 || selected_seat.includes(index)) {
+                                if (selected_seat.includes(index))
+                                    alert('Already Selected!');
+                                else
+                                    alert('You cannot purchase more than 4 tickets at a time!');
+                            } else {
+                                $(item1[index]).addClass("selected-seat");
+                                selected_seat.push(index);
+                                count = count + 1;
+                            }
+                        }
+
+                    }
+                })(i);
+            }
+
+            for (var i = 0, len = g2.children.length; i < len; i++) {
+                (function(index) {
+                    g2.children[i].onclick = function() {
+                        if (occupied_seat.includes(index + g1.children.length)) {
+                            alert('This Seat is Not Available!');
+                        } else {
+                            if (count > 3 || selected_seat.includes(index + g1.children.length)) {
+                                if (selected_seat.includes(index + g1.children.length))
+                                    alert('Already Selected!');
+                                else
+                                    alert('You cannot purchase more than 4 tickets at a time!');
+                            } else {
+                                $(item2[index]).addClass("selected-seat");
+                                selected_seat.push(index + g1.children.length);
+                                count = count + 1;
+                            }
+                        }
+
+                    }
+                })(i);
+            }
+
+        }
+
+        function preferable() {
+            var time = $('#time').find(":selected").val();
+            var date = document.getElementById("date").value;
+            var start_point = document.getElementById("start_point").value;
+            var destination = document.getElementById("destination").value;
+            if (time == '' || date == '' || start_point == '' || destination == '') {
+                alert('Please Fillup Required Fields!');
+                return;
+            }
+            var item1 = document.querySelectorAll(".section-1 img");
+            var item2 = document.querySelectorAll(".section-2 img");
+            var seat = $('#class_type').find(":selected").val();
+            if (seat == "Custom Choice") {
+
+                $.ajax({
+                    url: '/occupied_seat/',
+                    type: 'POST',
+                    data: {
+                        'start_point': start_point,
+                        'destination': destination,
+                        'date': date,
+                        'time': time,
+                    },
+                    dataType: "json",
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    success: function(data) {
+                        data = JSON.parse(data);
+                        occupied_seat = data;
+                        for (var i = 0; i < data.length; i++) {
+                            if (data[i] > 25) {
+                                $(item2[data[i] - 26]).addClass("unavailable-seat");
+                            } else {
+                                $(item1[data[i]]).addClass("unavailable-seat");
+                            }
+                        }
+                    },
+                    failure: function(data) {
+                        alert('Got an error! Please Try Later.');
+                    }
+
+                });
+
+                $(".seat").fadeIn("slow");
+
+            } else
+                $(".seat").fadeOut("slow");
+
+            seat_list(date, time);
+        }
+
         function available_ticket() {
             $('.toast').toast('show');
             var form = document.getElementById("booking");
@@ -208,6 +447,7 @@
             var start_point = document.getElementById("start_point").value;
             var destination = document.getElementById("destination").value;
             var date = document.getElementById("date").value;
+            var time = $('#time').find(":selected").val();
             var tickets = $('#tickets').find(":selected").val();
             var class_type = $('#class_type').find(":selected").val();
             $.ajax({
@@ -217,7 +457,8 @@
                     'start_point': start_point,
                     'destination': destination,
                     'date': date,
-                    'class_type': class_type
+                    'class_type': class_type,
+                    'time': time
                 },
                 dataType: "json",
                 headers: {
@@ -225,9 +466,14 @@
                 },
                 success: function(data) {
                     data = JSON.parse(data);
-                    alert(data);
-                    // document.getElementById("price").value = data.price;
-                    // document.getElementById("slots").value = data.slots;
+                    var paragraph = document.getElementById("ticket");
+                    var text = document.createTextNode(data.tickets);
+                    paragraph.appendChild(text);
+                    paragraph = document.getElementById("price");
+                    $("#ticket").text("No. of Tickets Available For You: " + data.tickets);
+                    $("#distance").text("Travel Distance: " + data.distance + "km");
+                    $("#price").text("Price Will be BDT " + data.price + " Per Ticket");
+                    $("#selected").text("You Have Selected " + tickets + " Tickets.");
                 },
                 failure: function(data) {
                     alert('Got an error! Please Try Later.');
@@ -379,7 +625,6 @@
                     }
                 }
             }
-            /*execute a function when someone clicks in the document:*/
             document.addEventListener("click", function(e) {
                 // closeAllLists(e.target);
                 // this will remove all items even if the empty field try to show all place
@@ -429,7 +674,6 @@
     </script>
 
 </body>
-<!-- This templates was made by Colorlib (https://colorlib.com) -->
 {% endblock %}
 
 </html>

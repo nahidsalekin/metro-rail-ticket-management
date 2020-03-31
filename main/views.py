@@ -1,6 +1,7 @@
-from django.http import HttpResponse,JsonResponse
+from django.http import HttpResponse,HttpResponseRedirect,JsonResponse
 from django.shortcuts import render, get_object_or_404,redirect
-from .models import user,main,location,ticket,booking,routes
+from .models import user,main,location,ticket,booking,routes,seat_list
+from django.db.models import Q
 from django.views.generic import TemplateView
 from django.contrib import messages
 from django.contrib.auth.forms import UserCreationForm
@@ -20,65 +21,56 @@ class Login(TemplateView):
 
 class About(TemplateView):
     template_name="about.html"
+    
 
-class Ticket(TemplateView):
-    template_name="ticket.html"    
+def check_ticket(request):
+    info = ticket.objects.all()
+    slots = 0
+    for init in info:
+        slots = slots+init.slots
+    total = 0    
+    ticket_info = booking.objects.all()
+    for passenger in ticket_info:
+        total = total + passenger.tickets
+    tickets = (slots - total)/2
+    slots = int(slots/2)    
+
+    return render(request,"ticket.html",{'tickets': range(slots)})
  
 def Location(request):
-    all_info = location.objects.all()
-    base_fare = 5
-    for start in all_info:
-        start_point = start.name
-        location1 = location.objects.get(name=start_point)
-        lat1 = location1.lattitude
-        lon1 = location1.longitude
-        for dest in all_info:
-            destination = dest.name
-            if start_point==destination:
-                continue
-            location2 = location.objects.get(name=destination)
-            lat2 = location2.lattitude
-            lon2 = location2.longitude
-            distance = calculate_distance(lat1,lon1,lat2,lon2)
-            price = distance*base_fare
-            price = float("{0:.2f}".format(price))
-            count = routes.objects.filter(start_point=start_point,destination=destination).count()
-            if count == 0:
-                new = routes(start_point=start_point,destination=destination,distance=distance,price=price)
-                new.save()
-            else:
-                update = routes.objects.get(start_point=start_point,destination=destination)
-                update.distance = distance
-                update.price =  price
-                update.save()    
-
+    all_info = location.objects.all()    
     return render(request,"station.html",{'all_info':all_info})
 
+def calculate_price(start_point,destination,price_per_km):
+    location1 = location.objects.get(name=start_point)
+    lat1 = location1.lattitude
+    lon1 = location1.longitude
+    location2 = location.objects.get(name=destination)
+    lat2 = location2.lattitude
+    lon2 = location2.longitude
+    distance = calculate_distance(lat1,lon1,lat2,lon2)
+    price = distance*price_per_km
+    price = round(price)
+    return distance, price
+
 def logout(request):
-    del request.session["auth"]
+    try:
+        del request.session['username']
+    except KeyError:
+        pass
     return render(request,"login.html")
 
 
 def user_login(request):
     username = request.POST["username"]
     password = request.POST["password"]
-    all_info = user.objects.all()
-    loggedin=False
-
-    for info in all_info:
-        if((username == info.username or username == info.email) and password == info.password):
-            loggedin=True
-            break
+    u = user.objects.get(username=username)
  
-    if loggedin == True:
-        request.session["auth"] = "yes"
+    if u.password == password:
+        request.session['username'] = u.username
         return render(request,"index.html")
     else:
         return render(request,"login.html")   
-
-    
-
-    
 
 def submit_user(request):
     fullname = request.POST["fullname"]
@@ -87,11 +79,14 @@ def submit_user(request):
     gender = request.POST["gender"]
     number = request.POST["number"]
     password = request.POST["password"]
-
-    main_info = user(fullname=fullname,username=username,email=email,gender=gender,number=number,password=password)
-    main_info.save()
-    messages.add_message(request, messages.INFO, 'Registration Succesfull.') 
-
+    count = user.objects.filter(Q(username=username) | Q(email=email) | Q(number=number)).count()
+    if count == 0:
+        main_info = user(fullname=fullname,username=username,email=email,gender=gender,number=number,password=password)
+        main_info.save()
+        messages.add_message(request, messages.INFO, 'Registration Successful.')
+    else:
+        messages.add_message(request, messages.INFO, 'Registration Failed! User Already exists.')
+        
     return render(request,"login.html")
 
 def add_location(request):    
@@ -123,7 +118,6 @@ def remove(request):
     return HttpResponse("")
 
 def ticket_info(request):
-    # info = ticket.objects.all()
     return render(request,"ticket_info.html")
 
 def current_price(request):
@@ -155,27 +149,26 @@ def update_price(request):
 
 def ticket_availability(request):
     if request.method == 'POST':
-        start_pont = request.POST["start_point"]
+        start_point = request.POST["start_point"]
         destination = request.POST["destination"]
         date = request.POST["date"]
         class_type = request.POST["class_type"]
         time = request.POST["time"]
-        count = booking.objects.filter(start_pont=start_pont,destination=destination,date=date,class_type=class_type,time=time).count()
-        
+        count = booking.objects.filter(start_point=start_point,destination=destination,date=date,class_type=class_type,time=time).count()
+        info = ticket.objects.get(class_type=class_type)
+        distance, base_fare = calculate_price(start_point,destination,info.price)
+        price = base_fare
+        tickets= 0
         if count==0:
-            tickets = ticket.objects.get(class_type=class_type)
-            print(tickets.price)
-            base_fare = tickets.base_fare
-            price = tickets.price
-            tickets = tickets.slots
-            total = base_fare+price
-
-            data = json.dumps({
-            'price': total,
-            'tickets': tickets})
-            return JsonResponse(data,content_type='application/json',safe=False)
+            tickets = info.slots
         else:
-                
+            total = 0
+            ticket_info = booking.objects.filter(start_point=start_point,destination=destination,date=date,class_type=class_type,time=time)
+            for passenger in ticket_info:
+                total = total + passenger.tickets
+            tickets = info.slots - total
+        data = json.dumps({'distance': distance,'price': price,'tickets': tickets})
+        return JsonResponse(data,content_type='application/json',safe=False)           
     return HttpResponse("0")
 
 def calculate_distance(lat1,lon1,lat2,lon2):
@@ -194,3 +187,76 @@ def calculate_distance(lat1,lon1,lat2,lon2):
     distance = R * c
     distance = float("{0:.2f}".format(distance))
     return distance    
+        
+import re
+def confirm_booking(request):
+    if request.session._session:
+        print("login firsst")
+        return render(request,"ticket.html")
+        return HttpResponseRedirect('login')
+    elif request.method == 'POST':
+        start_point = request.POST["start_point"]
+        destination = request.POST["destination"]
+        date = request.POST["date"]
+        class_type = "student"
+        time = request.POST["time"]
+        quantity = int(request.POST["quantity"])
+        seat_index = request.POST["seat_index"]
+        cost = request.POST["price"]
+        id = request.POST["id"]
+        u = user.objects.get(username=request.session['username'])
+        number = u.number
+        count = booking.objects.filter(id=id).count()
+        if count!= 0:
+            return HttpResponse("")
+        confirm = booking(id=id,number=number,start_point=start_point,destination=destination,date=date,class_type=class_type,time=time,cost=cost,tickets=quantity)
+        confirm.save()
+        temp = []
+        temp = re.findall('\d+', seat_index)
+        for index in temp:
+            count = seat_list.objects.filter(occupied=index,start_point=start_point,destination=destination,date=date,time=time).count()
+            if count !=0:
+                continue
+            seat_index = seat_list(occupied=index,start_point=start_point,destination=destination,date=date,time=time)
+            seat_index.save()  
+    return render(request,"ticket.html")
+
+def purchase(request):
+    if request.method == 'POST':
+        start_point = request.POST["start_point"]
+        destination = request.POST["destination"]
+        class_type = request.POST["class_type"]
+        time = request.POST["time"]
+        date = request.POST["date"]
+        if class_type == "Custom Choice":
+            seat_no = request.POST["seat_no"]
+            seat_no = seat_no[:-1]
+            seat_index = request.POST["seat_index"]
+            quantity = request.POST["quantity"]
+            seats = quantity + " (" + seat_no + ")"
+            quantity = int(quantity)
+            class_type = "student"
+        else:
+            quantity = request.POST["tickets"]
+            seats = quantity
+            quantity = int(quantity)
+        info = ticket.objects.get(class_type=class_type)
+        distance, base_fare = calculate_price(start_point,destination,info.price)
+        price = quantity*base_fare
+        return render(request,"purchase.html",{'from':start_point,'to':destination,'distance':distance,'date':date,'time':time,'seats':seats,'quantity':quantity,'price':price,'seat_index':seat_index}) 
+    return render(request,"purchase.html")
+
+
+def occupied_seat(request):
+    if request.method == 'POST':    
+        start_point = request.POST["start_point"]
+        destination = request.POST["destination"]
+        time = request.POST["time"]
+        date = request.POST["date"]
+        index = []
+        all_seat = seat_list.objects.filter(start_point=start_point,destination=destination,time=time,date=date)
+        for seat in all_seat:
+            index.append(seat.occupied)
+        index = json.dumps(index)
+        return JsonResponse(index, safe=False)   
+    return HttpResponse("0")

@@ -65,7 +65,7 @@
                         <td>{{date}}</td>
                         <td>{{time}}</td>
                         <td>{{seats}}</td>
-                        <td>.....</td>
+                        <td style="text-transform:capitalize;">{{ class_type }}</td>
                     </tr>
                 </tbody>
             </table>
@@ -74,6 +74,10 @@
     </div>
 
     <script>
+        var login_status = "{{ request.session.username }}";
+        if (login_status.length < 1)
+            window.location.href = '/login';
+
         function book() {
             var start_point = "{{ from }}";
             var destination = "{{ to }}";
@@ -82,7 +86,7 @@
             var seats = "{{ seats }}";
             var seat_index = "{{ seat_index }}";
             var quantity = "{{ quantity }}";
-            var passenger_type = "student";
+            var class_type = "{{ class_type }}";
             var price = "{{ price }}";
             var length = 6;
             var id = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, length);
@@ -94,7 +98,7 @@
                     'start_point': start_point,
                     'destination': destination,
                     'date': date,
-                    'class_type': passenger_type,
+                    'class_type': class_type,
                     'time': time,
                     'quantity': quantity,
                     'seat_index': seat_index,
@@ -105,13 +109,16 @@
                 headers: {
                     'X-CSRFToken': '{{ csrf_token }}'
                 },
-                success: function(data) {},
+                success: function(data) {
+
+                },
                 failure: function(data) {
                     alert('Got an error! Please Try Later.');
                 }
 
             });
             alert('Booking Successful.');
+            window.location.href = '/';
 
         }
     </script>

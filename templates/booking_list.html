@@ -1,0 +1,72 @@
+<!DOCTYPE html> {% extends 'header.html' %} {% load static %} {% block body %}
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking List</title>
+    <style>
+        body {
+            background-color: rgb(212, 216, 240);
+        }
+        
+        .full-content {
+            width: 95%;
+            margin: 0 auto;
+            /* opacity: 0.5; */
+        }
+        
+        .table input {
+            background: none;
+            border: none;
+            color: white;
+            max-width: 100px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="full-content justify-content-around mt-5" id="test">
+        <table class="table table-striped table-dark">
+            <thead>
+                <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Contuct Number</th>
+                    <th scope="col">Passenger Type</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Start Point</th>
+                    <th scope="col">Destination</th>
+                    <th scope="col">No. of Tickets</th>
+                    <th scope="col">Cost(BDT)</th>
+                    <th scope="col">Cancel</th>
+                </tr>
+            </thead>
+            <tbody>
+                <form action="/cancel_reservation_admin/" method="POST">
+                    {% csrf_token %} {% for object in all_booking %}
+                    <tr>
+                        {% for user in all_user %} {%if user.number == object.number%}
+                        <td>{{ user.fullname }}</td>
+                        {% endif %} {% endfor %}
+                        <td><input type="text" readonly name="number" value="{{ object.number }}"></td>
+                        <td>{{ object.class_type }}</td>
+                        <td><input type="text" readonly name="date" value="{{ object.date }}"></td>
+                        <td><input type="text" readonly name="time" value="{{ object.time }}"></td>
+                        <td><input type="text" readonly name="start_point" value="{{ object.start_point }}"></td>
+                        <td><input type="text" readonly name="destination" value="{{ object.destination }}"></td>
+                        <td>{{ object.tickets }}</td>
+                        <td>{{ object.cost }}</td>
+                        <td><button type="submit">x</button></td>
+                    </tr>
+                    {% endfor %}
+                </form>
+            </tbody>
+        </table>
+    </div>
+
+</body>
+{% endblock %}
+
+</html>

@@ -23,18 +23,10 @@
     margin: auto;
     padding: 40px;
     overflow: hidden;
-    /* background-image: url('img/r.jpg'); */
     background-size: cover;
     border-radius: 5px;
     z-index: 20;
 }
-
-
-/* .ticket-body {
-    background-image: url('img/r2.jpg');
-    background-repeat: no-repeat;
-    background-size: cover;
-} */
 
 .booking-form::before {
     content: '';
@@ -190,6 +182,17 @@
 .booking-form .submit-btn:hover,
 .booking-form .submit-btn:focus {
     opacity: 0.9;
+}
+
+.ticket-form {
+    background-image: url(./img/main.jpg);
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+}
+
+.table {
+    background: none;
 }
 
 @media only screen and (max-width:769px) {

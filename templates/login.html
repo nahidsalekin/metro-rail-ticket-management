@@ -4,16 +4,24 @@
 <head>
     <meta charset="UTF-8">
     <title>Login</title>
-    <!-- <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous"> -->
-    <!-- <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script> -->
-
     <link href="{% static 'style.css' %}" rel="stylesheet">
 </head>
+{% if messages %} {% for message in messages %}
+<div style="width: 80%;margin: 0 auto;" class="alert alert-secondary alert-dismissible fade show">
+    <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <strong>Alert!</strong> {{message}}.
+</div> {% endfor %}
+<script>
+    $(".alert").fadeIn(500, function() {
+        $(".alert").fadeOut(3500);
+    });
+</script>
+{% endif %}
 
-<body class="form--body ">
-
+<body class="form-body2">
     <br>
     <div class="page-content">
+
         <div class="form-v8-content">
             <div class="form-left">
                 <!-- <img src="{% static 'img/r2.jpg' %}" alt="form" height="800px" width="600px"> -->

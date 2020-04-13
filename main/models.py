@@ -1,8 +1,6 @@
 from __future__ import unicode_literals
 from django.db import models
 
-# Create your models here.
-
 
 class main(models.Model):
     name = models.CharField(max_length=50)
@@ -12,7 +10,7 @@ class main(models.Model):
 class user(models.Model):
     fullname = models.CharField(max_length=50)
     username = models.CharField(max_length=20)
-    email = models.TextField(max_length=20)
+    email = models.TextField(max_length=50)
     gender = models.TextField(max_length=20)
     age = models.IntegerField()
     number = models.CharField(max_length=20)
@@ -38,15 +36,24 @@ class ticket(models.Model):
 class booking(models.Model):
     id = models.CharField(primary_key=True,max_length=50)
     number = models.CharField(max_length=20)
-    date = models.DateTimeField()
+    date = models.DateField()
     start_point = models.CharField(max_length=50)
     destination = models.CharField(max_length=50)
-    time = models.TimeField()
+    time = models.CharField(max_length=50)
     class_type = models.CharField(max_length=20)
     tickets = models.IntegerField()
     cost = models.FloatField()
     def __str__(self):
         return self.number      
+
+class seat_list(models.Model):
+    occupied = models.IntegerField()
+    date = models.DateField()
+    start_point = models.CharField(max_length=50)
+    destination = models.CharField(max_length=50)
+    time = models.CharField(max_length=50)
+    def __str__(self):
+        return self.destination
 
 class routes(models.Model):
     id = models.AutoField(primary_key=True)

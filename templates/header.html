@@ -8,6 +8,7 @@
 
 
     <!-- <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script> -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
     <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
 
@@ -91,20 +92,22 @@
                     <a class="nav-link" href="{% url 'check_ticket' %}">Purchase Ticket</a>
                 </li>
 
-                <li class="nav-item">
-                    <a class="nav-link" href="/">About</a>
-                </li>
-                {% if request.session.username == "admin" %}
+
+                {% if request.session.username %}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
-                      Admin Panel
+                        <i class="fa fa-user-circle-o" style="font-size:20px"></i>
                     </a>
-                    <div class="dropdown-menu">
+                    <div class="dropdown-menu" style="position: sticky;">
+                        <a class="dropdown-item" href="{% url 'profile' %}">Profile</a> {% if request.session.username == "admin" %}
                         <a class="dropdown-item" href="{% url 'location' %}">Station</a>
                         <a class="dropdown-item" href="{% url 'ticket_info' %}">Ticket Details</a>
+                        <a class="dropdown-item" href="{% url 'booking_list' %}">All Reservations</a>
+                        <a class="dropdown-item" href="{% url 'users' %}">All Users</a>{% endif %}
                     </div>
                 </li>
                 {% endif %}
+
             </ul>
         </div>
     </nav>

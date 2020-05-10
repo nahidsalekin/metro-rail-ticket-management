@@ -328,7 +328,7 @@ def confirm_booking(request):
     return render(request,"ticket.html")
 
 def purchase(request):
-    if request.method == 'POST':
+    if request.method == 'POST' and 'username' in request.session:
         start_point = request.POST["start_point"]
         destination = request.POST["destination"]
         class_type = request.POST["class_type"]

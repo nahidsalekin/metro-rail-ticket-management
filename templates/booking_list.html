@@ -5,22 +5,73 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Booking List</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
         body {
-            background-color: rgb(212, 216, 240);
+            background-color: #F44336;
         }
         
         .full-content {
+            display: flex;
             width: 95%;
             margin: 0 auto;
-            /* opacity: 0.5; */
+            filter: blur(0);
+            position: relative;
+            font-size: 15px;
+        }
+        
+        .table th,
+        .table td {
+            text-align: center;
         }
         
         .table input {
             background: none;
             border: none;
             color: white;
+            text-align: center;
             max-width: 100px;
+        }
+        
+        .remove_btn {
+            background: none;
+            border: none;
+            text-align: center;
+        }
+        
+        .blur>*:not(#toast-not-blur) {
+            filter: blur(4px);
+            -webkit-filter: blur(4px);
+            -moz-filter: blur(4px);
+            -o-filter: blur(4px);
+            -ms-filter: blur(4px);
+            cursor: wait;
+        }
+        
+        .toast-area {
+            width: 0;
+        }
+        
+        .overlay {
+            position: fixed;
+            display: none;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -1;
+            cursor: not-allowed;
+        }
+        
+        .modal-header,
+        .modal-footer {
+            border: none;
+        }
+        
+        .modal-dialog {
+            width: 400px;
         }
     </style>
 </head>
@@ -32,6 +83,7 @@
             <thead>
                 <tr>
                     <th scope="col">Name</th>
+                    <th scope="col">Booking ID</th>
                     <th scope="col">Contuct Number</th>
                     <th scope="col">Passenger Type</th>
                     <th scope="col">Date</th>
@@ -41,32 +93,114 @@
                     <th scope="col">No. of Tickets</th>
                     <th scope="col">Cost(BDT)</th>
                     <th scope="col">Cancel</th>
+                    <th scope="col">Payment</th>
                 </tr>
             </thead>
             <tbody>
-                <form action="/cancel_reservation_admin/" method="POST">
-                    {% csrf_token %} {% for object in all_booking %}
-                    <tr>
-                        {% for user in all_user %} {%if user.number == object.number%}
-                        <td>{{ user.fullname }}</td>
-                        {% endif %} {% endfor %}
-                        <td><input type="text" readonly name="number" value="{{ object.number }}"></td>
-                        <td>{{ object.class_type }}</td>
-                        <td><input type="text" readonly name="date" value="{{ object.date }}"></td>
-                        <td><input type="text" readonly name="time" value="{{ object.time }}"></td>
-                        <td><input type="text" readonly name="start_point" value="{{ object.start_point }}"></td>
-                        <td><input type="text" readonly name="destination" value="{{ object.destination }}"></td>
-                        <td>{{ object.tickets }}</td>
-                        <td>{{ object.cost }}</td>
-                        <td><button type="submit">x</button></td>
-                    </tr>
-                    {% endfor %}
-                </form>
+                {% for object in all_booking %}
+                <tr>
+                    {% for user in all_user %} {%if user.number == object.number%}
+                    <td>{{ user.fullname }}</td>
+                    {% endif %} {% endfor %}
+                    <td>{{ object.id }}</td>
+                    <td>{{ object.number }}</td>
+                    <td style="text-transform: capitalize;">{{ object.class_type }}</td>
+                    <td>{{ object.date|date:'Y-m-d' }}</td>
+                    <td>{{ object.time }}</td>
+                    <td>{{ object.start_point }}</td>
+                    <td>{{ object.destination }}</td>
+                    <td>{{ object.tickets }}</td>
+                    <td>{{ object.cost }}</td>
+                    <td><button type="button" data-toggle="modal" data-target="#myModal" class="remove_btn"><i class="material-icons" style="color:red">delete_forever</i></button></td>
+                    {% if object.status == "unpaid" %}
+                    <form action="/payment/" method="POST" onSubmit="return confirm('Do you want to submit?')">
+                        {% csrf_token %}
+                        <input type="text" name="id" hidden value="{{ object.id }}">
+                        <td><button class="btn btn-danger" type="submit">Confirm</button></td>
+                    </form>
+                    {% else %}
+                    <td>Confirmed</td>
+                    {% endif %}
+
+                </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
+    <div class="modal fade" id="myModal" data-keyboard="false" data-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
 
+                <div class="modal-header">
+                    <p class="modal-title">Are You Sure to Remove this Reservation?</p>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <div class="modal-footer">
+                    <div class="confirm d-flex justify-content-end">
+                        <button type="button" data-dismiss="modal" class="btn btn-outline-primary btn-sm">Cancel</button>
+                        <button type="button" onclick="confirm()" data-dismiss="modal" class="btn btn-outline-danger btn-sm ml-2">Yes</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
 </body>
+<script>
+    var start_point;
+    var destination;
+    var date;
+    var time;
+    var class_type;
+    var cost;
+    var id;
+    var number;
+    var $row;
+    $(".remove_btn").click(function() {
+        $row = $(this).closest("tr");
+        id = $row.find("td:nth-child(2)").text();
+        number = $row.find("td:nth-child(3)").text();
+        class_type = $row.find("td:nth-child(4)").text();
+        date = $row.find("td:nth-child(5)").text();
+        time = $row.find("td:nth-child(6)").text();
+        start_point = $row.find("td:nth-child(7)").text();
+        destination = $row.find("td:nth-child(8)").text();
+        cost = $row.find("td:nth-child(10)").text();
+    });
+
+    function confirm() {
+        $.ajax({
+            url: '/cancel_reservation_admin/',
+            type: 'POST',
+            data: {
+                'id': id,
+                'number': number,
+                'start_point': start_point,
+                'destination': destination,
+                'date': date,
+                'time': time,
+                'cost': cost,
+                'class_type': class_type,
+            },
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            success: function(data) {
+                //
+            },
+            failure: function(data) {
+                alert('Got an error! Please Try Later.');
+            }
+
+        });
+        $row.remove();
+        var reservation = document.getElementById("test");
+        reservation.classList.remove("blur");
+        $(".remove_btn").prop("disabled", false);
+        $('.toast').toast('hide');
+    }
+</script>
 {% endblock %}
 
 </html>

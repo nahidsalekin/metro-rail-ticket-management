@@ -5,6 +5,7 @@ urlpatterns = [
      path('login/',views.Login.as_view(),name='login'),
      path('about/',views.About.as_view(),name='about'),
      path('profile/',views.profile,name='profile'),
+     path('upload_image/',views.upload_image,name='upload_image'),
      path('users/',views.users,name='users'),
      path('update_profile/',views.update_profile,name='update_profile'),
      path('check_ticket/',views.check_ticket,name='check_ticket'),
@@ -24,6 +25,8 @@ urlpatterns = [
      path('confirm_booking/',views.confirm_booking,name='confirm_booking'),
      path('occupied_seat/',views.occupied_seat,name='occupied_seat'),
      path('booking_list/',views.booking_list,name='booking_list'),
+     path('my_booking/',views.my_booking,name='my_booking'),
+     path('payment/',views.payment,name='payment'),
      path('logout/',views.logout,name='logout'),
 
      

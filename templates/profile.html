@@ -7,10 +7,30 @@
     <title>Profile</title>
 
     <style>
+        body {
+            background: #F44336;
+            font-family: 'Open Sans', sans-serif;
+        }
+        
+        .form-control,
+        .form-control[readonly] {
+            background-color: #F44336;
+            color: whitesmoke;
+        }
+        
+        .col-form-label {
+            color: whitesmoke;
+        }
+        
+        .table {
+            color: whitesmoke;
+        }
+        
         .tab-pane .alert input {
             background: none;
             border: none;
             max-width: 100px;
+            text-align: center;
         }
         
         .tab-pane .alert .panel-close {
@@ -19,6 +39,90 @@
             border: 1px solid black;
             border-radius: 5px;
             padding: 5px;
+        }
+        
+        .nav-tabs .nav-item a {
+            color: white;
+        }
+        
+        .img-profile {
+            width: 200px;
+            height: 200px;
+            background-image: url({{image}});
+            background-position: center top;
+            background-repeat: no-repeat;
+            background-size: cover;
+        }
+        
+        .container .row {
+            flex-wrap: wrap-reverse;
+            margin-bottom: 10px;
+        }
+        
+        .avatar-upload {
+            position: relative;
+            max-width: 205px;
+            margin: 50px auto;
+        }
+        
+        .avatar-upload .avatar-edit {
+            position: absolute;
+            right: 12px;
+            z-index: 1;
+            top: 10px;
+        }
+        
+        .avatar-upload .avatar-edit input {
+            display: none;
+        }
+        
+        .avatar-upload .avatar-edit input+label {
+            display: inline-block;
+            width: 34px;
+            height: 34px;
+            margin-bottom: 0;
+            border-radius: 100%;
+            background: #FFFFFF;
+            border: 1px solid transparent;
+            box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.12);
+            cursor: pointer;
+            font-weight: normal;
+            transition: all .2s ease-in-out;
+        }
+        
+        .avatar-upload .avatar-edit input+label:hover {
+            background: #f1f1f1;
+            border-color: #d6d6d6;
+        }
+        
+        .avatar-upload .avatar-edit input+label:after {
+            content: "\f040";
+            font-family: 'FontAwesome';
+            color: #757575;
+            position: absolute;
+            padding: 5px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            margin: auto;
+        }
+        
+        .avatar-upload .avatar-preview {
+            width: 192px;
+            height: 192px;
+            position: relative;
+            border-radius: 100%;
+            border: 6px solid #F8F8F8;
+            box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.1);
+        }
+        
+        .avatar-upload .avatar-preview>div {
+            width: 100%;
+            height: 100%;
+            border-radius: 100%;
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
         }
     </style>
 </head>
@@ -31,14 +135,15 @@
     </div> {% endfor %}
     <script>
         $(".alert").fadeIn(500, function() {
-            $(".alert").fadeOut(3500);
-
+            $(".alert").fadeOut(3500, function() {
+                $(".alert").remove();
+            });
         });
     </script>
     {% endif %}
     <div class="container">
-        <div class="row my-2">
-            <div class="col-lg-8 order-lg-2">
+        <div class="row my-3">
+            <div class="col-lg-8 order-lg-2 ml-5">
                 <ul class="nav nav-tabs">
                     <li class="nav-item">
                         <a href="" data-target="#profile" data-toggle="tab" class="nav-link active">Profile</a>
@@ -86,7 +191,7 @@
                             <div class="form-group row">
                                 <label class="col-lg-3 col-form-label form-control-label">Username</label>
                                 <div class="col-lg-9">
-                                    <input class="form-control" type="text" name="username" value="{{username}}" readonly>
+                                    <input class="form-control" type="text" name="username" value="{{username}}" onclick="deny()" readonly>
                                 </div>
                             </div>
                             <div class="form-group row">
@@ -123,11 +228,12 @@
                             });
                         </script>
                         {% endif %} {% for object in active %}
-                        <form action="/cancel_reservation/" method="POST">
+                        <form action="/cancel_reservation/" method="POST" onSubmit="if(!confirm('You are Removing This Reservation!')){return false;}">
                             {% csrf_token %}
                             <div class="alert alert-info alert-dismissable">
+                                <input type="text" name="id" hidden value="{{ object.id }}">
                                 <button type="submit" class="panel-close close">Cancel</button> Active Reservation: <strong> <input readonly type="text" name="start_point" value="{{object.start_point}}"> to <input readonly type="text" name="destination" value="{{object.destination}}"></strong>
-                                <br> {{object.tickets}} ticket for <input readonly type="text" name="date" value="{{object.date}}">, Time: <input readonly type="text" name="time" value="{{object.time}}">
+                                <br> {{object.tickets}} ticket for <input readonly type="text" name="date" value="{{object.date|date:'Y-m-d' }}">, Time: <input readonly type="text" name="time" value="{{object.time}}">
                             </div>
                         </form>
                         {% endfor %}
@@ -148,20 +254,52 @@
                     </div>
                 </div>
             </div>
-            <!-- <div class="col-lg-4 order-lg-1 text-center">
-            <img src="//placehold.it/150" class="mx-auto img-fluid img-circle d-block" alt="avatar">
-            <h6 class="mt-2">Upload a different photo</h6>
-            <label class="custom-file">
-                <input type="file" id="file" class="custom-file-input">
-                <span class="custom-file-control">Choose file</span>
-            </label>
-        </div> -->
+            <div class="col-lg-3 order-lg-1 text-center">
+                <form method="post" enctype="multipart/form-data" action="/upload_image/" id="image_form">
+                    {% csrf_token %}
+                    <div class="avatar-upload mx-auto">
+                        <div class="avatar-edit">
+
+                            <input type="file" name="image" id="imageUpload" accept="image/*" required>
+                            <label for="imageUpload"></label>
+                        </div>
+                        <div class="avatar-preview  mx-auto">
+                            <div id="imagePreview" style="background-image: url({{image}});">
+                            </div>
+                        </div>
+                        <label for="imagePreview" class="mt-3 text-white">Upload a New Profile Photo</label>
+                        <button type="submit" class="btn btn-outline-light btn-sm mt-1">Upload</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
     <script>
         function cancel() {
             window.location.href = '/';
         }
+
+        function deny() {
+            alert('You Cannot Change This Field!');
+        }
+
+        $(":file").on("change", function(e) {
+            if ((this.files[0].type).slice(0, 5) != "image") {
+                document.getElementById("image_form").reset();
+                alert('Invalid Image File!');
+            } else {
+                if (this.files && this.files[0]) {
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        $('#imagePreview').css('background-image', 'url(' + e.target.result + ')');
+                        // $('#imagePreview').hide();
+                        // $('#imagePreview').fadeIn("fast");
+                    }
+                    reader.readAsDataURL(this.files[0]);
+                    alert('Note: To confirm this changes you will required to login again!');
+                }
+            }
+        })
     </script>
     <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js" integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>

@@ -182,7 +182,7 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <input class="form-control" type="date" data-date-format="YYYY MM DD" onmouseout="time_control()" name="date" id="date" required>
+                                        <input class="form-control" type="date" data-date-format="YYYY MM DD" onchange="time_control()" name="date" id="date" required>
                                         <span class="form-label">Date</span>
                                     </div>
                                 </div>
@@ -374,9 +374,10 @@
 
         function add_selection() {
             var login_status = "{{ request.session.username }}";
-            if (login_status.length < 1)
+
+            if (login_status.length <= 1) {
                 window.location.href = '/login';
-            else if (selected_date < curr_date) {
+            } else if (selected_date < curr_date) {
                 alert('Selected Date is Not Available!');
                 window.location.href = '/check_ticket';
             } else {

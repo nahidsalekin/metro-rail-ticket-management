@@ -99,13 +99,14 @@
                         </div>
                         <div class="form-row">
                             <label class="form-row-inner">
-								<input type="password" name="comfirm_password" id="comfirm_password" class="input-text" required>
-								<span class="label">Comfirm Password</span>
+								<input type="password" name="comfirm_password" id="confirm_password" class="input-text" required>
+                                <span class="label">Comfirm Password</span>
+                                <span id='message'></span>
 								<span class="border"></span>
 							</label>
                         </div>
                         <div class="form-row-last">
-                            <input type="submit" name="register" class="register" value="Register">
+                            <input type="submit" id="register" name="register" class="register" value="Register">
                         </div>
                     </div>
                 </form>
@@ -141,6 +142,16 @@
 
 
     <script type="text/javascript">
+        $('#password, #confirm_password').on('keyup', function() {
+            if ($('#password').val() == $('#confirm_password').val()) {
+                $('#message').html('Matching').css('color', 'green');
+                document.getElementById('register').disabled = false;
+            } else {
+                $('#message').html('Not Matching').css('color', 'red');
+                document.getElementById('register').disabled = true;
+            }
+        });
+
         function openCity(evt, cityName) {
             var i, tabcontent, tablinks;
             tabcontent = document.getElementsByClassName("tabcontent");

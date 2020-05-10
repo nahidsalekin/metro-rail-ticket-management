@@ -13,7 +13,6 @@
     <link href="{% static 'style.css' %}" rel="stylesheet">
     <link type="text/css" rel="stylesheet" href="{% static 'ticket_style.css' %}" />
 
-
     <style>
         * {
             box-sizing: border-box;
@@ -135,6 +134,10 @@
             border: 0;
             border-top: 1px dashed rgb(49, 45, 45);
         }
+        
+        [type="date"]::-webkit-inner-spin-button {
+            display: none;
+        }
     </style>
 </head>
 
@@ -179,7 +182,7 @@
                             <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group">
-                                        <input class="form-control" type="date" data-date-format="YYYY MM DD" name="date" id="date" required>
+                                        <input class="form-control" type="date" data-date-format="YYYY MM DD" onmouseout="time_control()" name="date" id="date" required>
                                         <span class="form-label">Date</span>
                                     </div>
                                 </div>
@@ -220,7 +223,7 @@
 
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <select class="form-control" name="seat_choose" id="seat_choose" required onmouseout="preferable()">
+                                        <select class="form-control" name="seat_choose" id="seat_choose" required onclick="preferable()">
 											<option value="" selected hidden>Seat</option>
                                             <option value="random">Random</option>
                                             <option value="custom">Custom Select</option>
@@ -287,6 +290,7 @@
         </div>
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
 
     {% block javascript %}
@@ -295,6 +299,8 @@
         var count = 0;
         var selected_seat = [];
         var occupied_seat = [];
+        var selected_date;
+        var curr_date;
         var capacity = "{{ capacity }}";
 
         var date = new Date();
@@ -305,29 +311,50 @@
         if (month < 10)
             month = '0' + month.toString();
         if (day < 10)
-            day = day.toString();
+            day = '0' + day.toString();
+        if (minday < 10)
+            minday = '0' + minday.toString();
         var maxDate = year + '-' + month + '-' + day;
         var minDate = year + '-' + month + '-' + minday;
+
         $('#date').attr('max', maxDate);
         $('#date').attr('min', minDate);
 
+        var $options;
 
-        var i = 0;
-        var removable = [];
-        var current_time = date.toLocaleTimeString().replace(/(.*)\D\d+/, '$1');
-        var selectobject = document.getElementById("time");
-        var length = selectobject.length;
-        for (i = 0; i < selectobject.options.length; i++) {
-            if (get_minute(current_time) > get_minute(selectobject.options[i].value))
-                removable[i] = i;
-            else
-                removable[i] = -1;
-        }
-        i = selectobject.options.length;
-        while (i--) {
+        function time_control() {
+            curr_date = date.toISOString().slice(0, 10);
 
-            if (removable[i] != -1) {
-                selectobject.remove(i);
+            var i = 0;
+            var removable = [];
+            var current_time = date.toLocaleTimeString().replace(/(.*)\D\d+/, '$1');
+            var selectobject = document.getElementById("time");
+            selected_date = $("#date").val();
+            var length = selectobject.length;
+
+            if ($options === undefined) {
+                $options = $('#time option').clone();
+            };
+
+
+
+            if (selected_date == curr_date) {
+                for (i = 0; i < selectobject.options.length; i++) {
+                    if (get_minute(current_time) > get_minute(selectobject.options[i].value))
+                        removable[i] = i;
+                    else
+                        removable[i] = -1;
+                }
+                i = selectobject.options.length;
+                while (i--) {
+
+                    if (removable[i] != -1) {
+                        selectobject.remove(i);
+                    }
+                }
+            } else {
+                $('#time').empty();
+                $('#time').html($options.clone());
             }
         }
 
@@ -349,7 +376,10 @@
             var login_status = "{{ request.session.username }}";
             if (login_status.length < 1)
                 window.location.href = '/login';
-            else {
+            else if (selected_date < curr_date) {
+                alert('Selected Date is Not Available!');
+                window.location.href = '/check_ticket';
+            } else {
                 var available = -1;
                 var start_point = document.getElementById("start_point").value;
                 var destination = document.getElementById("destination").value;
@@ -420,6 +450,7 @@
                             }
                             document.getElementById("seat_no").value = seat;
                             document.getElementById("seat_index").value = seat_index;
+                            console.log(seat);
                             document.getElementById("form").submit();
                         }
                     },
@@ -503,6 +534,11 @@
             }
             var item1 = document.querySelectorAll(".section-1 img");
             var item2 = document.querySelectorAll(".section-2 img");
+            for (var i = 0; i < item1.length; i++) {
+                $(item1[i]).removeClass("unavailable-seat");
+                $(item2[i]).removeClass("unavailable-seat");
+
+            }
             var seat_choose = $('#seat_choose').find(":selected").val();
             if (seat_choose == "custom") {
                 $.ajax({
@@ -710,10 +746,10 @@
             });
         }
         var place;
-        $('#start_point').ready(function() {
+        $(document).ready(function() {
             var place = "none";
             $.ajax({
-                url: '/show_place',
+                url: '/show_place/',
                 type: 'get',
                 dataType: 'json',
                 success: function(data) {
@@ -732,7 +768,6 @@
 
     {% endblock %}
 
-    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
     <script>
         $('.form-control').each(function() {
             floatedLabel($(this));

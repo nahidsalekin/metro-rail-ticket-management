@@ -317,7 +317,6 @@ def confirm_booking(request):
                     continue
                 seat_index = seat(booking_id=id,occupied=index,start_point=start_point,destination=destination,date=date,time=time)
                 seat_index.save()
-
                 for each in places:
                     lat = each.lattitude
                     lng = each.longitude

@@ -1,0 +1,412 @@
+<!DOCTYPE html> {% extends 'header.html' %} {% load static %} {% block body %}
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        #map {
+            width: 100%;
+            height: 450px;
+            margin: 0 auto;
+        }
+        
+        .fullscreen-icon {
+            background-image: url("{% static 'map/icon-fullscreen.png' %}");
+        }
+        
+        .leaflet-retina .fullscreen-icon {
+            background-image: url("{% static 'map/icon-fullscreen-2x.png' %}");
+            background-size: 26px 26px;
+        }
+        
+        .leaflet-container:-webkit-full-screen {
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 99999;
+        }
+        
+        .leaflet-container:-ms-fullscreen {
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 99999;
+        }
+        
+        .leaflet-container:full-screen {
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 99999;
+        }
+        
+        .leaflet-container:fullscreen {
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 99999;
+        }
+        
+        .leaflet-pseudo-fullscreen {
+            position: fixed !important;
+            width: 100% !important;
+            height: 100% !important;
+            top: 0px !important;
+            left: 0px !important;
+            z-index: 99999;
+        }
+        
+        .full-content {
+            display: flex;
+            width: 100%;
+            margin: 0 auto;
+            flex-wrap: wrap-reverse;
+            filter: blur(0);
+        }
+        
+        .card-body {
+            padding-bottom: 0;
+        }
+        
+        .location-form {
+            background-color: rgb(255, 255, 255);
+            margin-top: 20px;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+        
+        .card-body label {
+            color: black;
+        }
+        
+        .place-list {
+            margin-top: 20px;
+            max-width: 300px;
+            min-width: 200px;
+            margin-bottom: 20px;
+            max-height: 250px;
+        }
+        
+        .stations {
+            overflow-y: auto;
+        }
+        
+        .stations p {
+            margin-left: 5px;
+        }
+        
+        h5 {
+            text-align: center;
+            color: white;
+            display: none;
+            margin-top: 0;
+            margin-bottom: 0;
+            font-style: italic;
+        }
+        
+        .delete {
+            background: none;
+            border: none;
+            text-align: center;
+            padding: 0;
+        }
+        
+        .modal-header,
+        .modal-footer {
+            border: none;
+        }
+        
+        .modal-dialog {
+            width: 400px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="full-content d-flex justify-content-around" id="test">
+
+        <div class="location-form border card">
+            {% if messages %} {% for message in messages %}
+            <div class="alert alert-success alert-dismissible fade show">
+                <button type="button" class="close" data-dismiss="alert">&times;</button>
+                <strong>Success!</strong> New Station Has Been Added.
+            </div> {% endfor %}
+            <script>
+                $(".alert").fadeIn(500, function() {
+                    $(".alert").fadeOut(3500);
+
+                });
+            </script>
+            {% endif %}
+            <div class="card-header bg-dark text-white">
+                <h4>Add Station From Map</h4>
+            </div>
+            <form class="card-body" method="post" action="/add_location/">
+                {% csrf_token %}
+                <div class="form-group row">
+                    <label for="lat" class="col-sm-2 col-form-label">Area:</label>
+                    <div class="col-sm-10">
+                        <input type="text" class="form-control" name="name" id="address" maxlength="50" required>
+                    </div>
+                </div>
+                <div class="form-group row">
+                    <label for="lat" class="col-sm-2 col-form-label">Lattitude:</label>
+                    <div class="col-sm-4">
+                        <input type="text" class="form-control" name="lat" id="lat" required>
+                    </div>
+
+                    <label for="lng" class="col-sm-2 col-form-label">Longitude:</label>
+                    <div class="col-sm-4">
+                        <input type="text" class="form-control" name="lng" id="lng" required>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <div class="col-sm-10">
+                        <button type="submit" onclick="location()" class="btn btn-danger">Add</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="place-list border card">
+            <div class="card-header bg-success text-white text-center">
+                <h6>Available Stations</h6>
+            </div>
+            <div class="stations">
+                {% for data in all_info %}
+                <p> <button onclick="remove_place()" data-toggle="modal" data-target="#myModal" class="delete"><font class="text-danger font-weight-bolder" style="font-size: 20px;">&times;</font></button> &nbsp; {{ data.name }}</p>
+                {% endfor %}
+            </div>
+        </div>
+
+    </div>
+
+    <div class="modal fade" id="myModal" data-keyboard="false" data-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <p class="modal-title">Are You Sure to Remove this Place From the List?</p>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <div class="modal-footer">
+                    <div class="confirm d-flex justify-content-end">
+                        <button type="button" data-dismiss="modal" class="btn btn-outline-primary btn-sm">Cancel</button>
+                        <button type="button" onclick="remove()" data-dismiss="modal" class="btn btn-outline-danger btn-sm ml-2">Yes</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <div class="text-center text-danger">
+        <h7>Use ctrl+scroll to zoom the map</h7>
+    </div>
+    <div id="map"></div>
+
+    <script>
+        var index = -1;
+
+        function remove_place() {
+
+            var item = document.querySelectorAll(".stations p"),
+                item_arr = [];
+            for (var i = 0; i < item.length; i++) {
+                item_arr.push(item[i].innerHTML);
+            }
+            for (var i = 0; i < item.length; i++) {
+                item[i].onclick = function() {
+                    index = item_arr.indexOf(this.innerHTML);
+                };
+            }
+        }
+
+
+        function remove() {
+
+            if (index != -1) {
+                var item = document.querySelectorAll(".stations p");
+                var curr_place = item[index].textContent;
+
+                curr_place = curr_place.slice(5, curr_place.length);
+                console.log(curr_place);
+                //button icon is taking upto 4 spaces on array, so skipping this
+                item[index].parentNode.removeChild(item[index]);
+
+                //if json.Stringyfy is used, the text will appear in python with double quotation
+                $.ajax({
+                    url: '/remove/',
+                    type: 'POST',
+                    data: {
+                        'curr_place': curr_place
+                    },
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    success: function(data) {
+                        //
+                    },
+                    failure: function(data) {
+                        alert('Got an error! Please Try Later.');
+                    }
+
+                });
+            }
+        }
+    </script>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.2.0/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.2.0/dist/leaflet-src.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-search@2.3.7/dist/leaflet-search.src.css" />
+    <script src="https://unpkg.com/leaflet-search@2.3.7/dist/leaflet-search.src.js"></script>
+
+
+    <script src="https://cdn-geoweb.s3.amazonaws.com/esri-leaflet/0.0.1-beta.5/esri-leaflet.js"></script>
+    <script src="https://cdn-geoweb.s3.amazonaws.com/esri-leaflet-geocoder/0.0.1-beta.5/esri-leaflet-geocoder.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdn-geoweb.s3.amazonaws.com/esri-leaflet-geocoder/0.0.1-beta.5/esri-leaflet-geocoder.css">
+
+    <script src="{% static 'map/Control.FullScreen.js' %}"></script>
+    <script>
+        var popup = L.popup();
+
+        function onMapClick(e) {
+            var lat = e.latlng.lat.toFixed(10);
+            var lng = e.latlng.lng.toFixed(10);
+
+            var textArea = document.createElement("textarea");
+            textArea.style.position = 'fixed';
+            textArea.style.top = 0;
+            textArea.style.left = 0;
+            textArea.style.width = '2em';
+            textArea.style.height = '2em';
+            textArea.style.padding = 0;
+            textArea.style.border = 'none';
+            textArea.style.outline = 'none';
+            textArea.style.boxShadow = 'none';
+            textArea.style.background = 'transparent';
+            document.body.appendChild(textArea);
+            textArea.select();
+
+            document.body.removeChild(textArea);
+            popup
+                .setLatLng(e.latlng)
+                .setContent("Selected Point With " + e.latlng.toString())
+                .openOn(map);
+
+            function simpleReverseGeocoding(lng, lat) {
+                fetch('http://nominatim.openstreetmap.org/reverse?format=json&lon=' + lng + '&lat=' + lat).then(function(response) {
+                    return response.json();
+                }).then(function(json) {
+                    document.getElementById('lat').value = lat;
+                    document.getElementById('lng').value = lng;
+                    document.getElementById("address").value = json.display_name;
+                })
+            }
+            simpleReverseGeocoding(lng, lat);
+        }
+
+
+        var osmUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+        var osm = new L.TileLayer(osmUrl, {
+            minZoom: 2,
+            maxZoom: 19
+        });
+
+        var googleStreets = new L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+            minZoom: 2,
+            maxZoom: 17,
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+        });
+
+        var googleSat = new L.tileLayer('https://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            minZoom: 1,
+            maxZoom: 21,
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
+        });
+
+        var map = new L.Map('map', {
+            fullscreenControl: true,
+            center: [23.7678781948, 90.4251730442],
+            zoom: 18,
+            doubleClickZoom: false,
+            maxBounds: ([
+                [90, -270],
+                [-90, 270]
+            ]),
+        });
+
+        map.scrollWheelZoom.disable();
+
+        $("#map").bind('mousewheel DOMMouseScroll', function(event) {
+            event.stopPropagation();
+            if (event.ctrlKey == true) {
+                event.preventDefault();
+                map.scrollWheelZoom.enable();
+                $('#map').removeClass('map-scroll');
+                setTimeout(function() {
+                    map.scrollWheelZoom.disable();
+                }, 1000);
+            } else {
+                map.scrollWheelZoom.disable();
+                $('#map').addClass('map-scroll');
+            }
+
+        });
+
+        $(window).bind('mousewheel DOMMouseScroll', function(event) {
+            $('#map').removeClass('map-scroll');
+        })
+        L.control.layers({
+            "OSM (Mapnik)": osm,
+            "Google Street": googleStreets,
+            "Google Earth": googleSat
+        }).addTo(map);
+
+
+        map.addLayer(googleStreets);
+        var map_set = "googleStreets";
+        map.fitBounds([
+            [0, -180],
+            [0, 180]
+        ]);
+
+        var searchControl = new L.esri.Controls.Geosearch({
+            params: {
+                countrycodes: "BD"
+            }
+
+        }).addTo(map);
+
+        var results = new L.LayerGroup().addTo(map);
+
+        searchControl.on('results', function(data) {
+            results.clearLayers();
+            for (var i = data.results.length - 1; i >= 0; i--) {
+                document.getElementById('lat').value = data.results[0].latlng.lat;
+                document.getElementById('lng').value = data.results[0].latlng.lng;
+                document.getElementById("address").value = data.results[0].name;
+                results.addLayer(L.marker(data.results[i].latlng));
+            }
+        });
+
+
+        map.on('click', onMapClick);
+
+
+        map.on('enterFullscreen', function() {
+            if (window.console) window.console.log('enterFullscreen');
+        });
+        map.on('exitFullscreen', function() {
+            if (window.console) window.console.log('exitFullscreen');
+        });
+    </script>
+
+</body>
+{% endblock %}
+
+</html>

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import main,user,location,ticket,booking,routes,seat_list
+from .models import main,user,location,ticket,booking,seat
 
 # Register your models here.
 
@@ -8,5 +8,4 @@ admin.site.register(user)
 admin.site.register(location)
 admin.site.register(ticket)
 admin.site.register(booking)
-admin.site.register(routes)
-admin.site.register(seat_list)
+admin.site.register(seat)

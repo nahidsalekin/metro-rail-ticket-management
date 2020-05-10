@@ -36,6 +36,19 @@
         .btn-success {
             border-color: #ffffff;
         }
+        
+        body {
+            user-select: none;
+            /* supported by Chrome and Opera */
+            -webkit-user-select: none;
+            /* Safari */
+            -khtml-user-select: none;
+            /* Konqueror HTML */
+            -moz-user-select: none;
+            /* Firefox */
+            -ms-user-select: none;
+            /* Internet Explorer/Edge */
+        }
     </style>
 </head>
 
@@ -69,7 +82,7 @@
                     </tr>
                 </tbody>
             </table>
-            <h6 class="bg-info text-right" style="margin: 0;">Total Cost: {{price}} tk&nbsp;</h6>
+            <h6 class="bg-info text-right p-2" style="margin: 0; color: cornsilk;font-weight: bold;">Total Cost: {{price}} tk&nbsp;</h6>
         </div>
     </div>
 
@@ -88,41 +101,46 @@
             var quantity = "{{ quantity }}";
             var class_type = "{{ class_type }}";
             var price = "{{ price }}";
+            var validity = "{{ validity}}";
             var length = 6;
             var id = Math.random().toString(36).replace(/[^a-z]+/g, '').substr(0, length);
 
-            $.ajax({
-                url: '/confirm_booking/',
-                type: 'POST',
-                data: {
-                    'start_point': start_point,
-                    'destination': destination,
-                    'date': date,
-                    'class_type': class_type,
-                    'time': time,
-                    'quantity': quantity,
-                    'seat_index': seat_index,
-                    'price': price,
-                    'id': id
-                },
-                dataType: "json",
-                headers: {
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                success: function(data) {
+            if (validity != 0) {
+                alert('You cannot book same trip twice for same date & time.');
+                window.location.href = '/';
+            } else {
+                $.ajax({
+                    url: '/confirm_booking/',
+                    type: 'POST',
+                    data: {
+                        'start_point': start_point,
+                        'destination': destination,
+                        'date': date,
+                        'class_type': class_type,
+                        'time': time,
+                        'quantity': quantity,
+                        'seat_index': seat_index,
+                        'price': price,
+                        'id': id
+                    },
+                    dataType: "json",
+                    headers: {
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    success: function(data) {
 
-                },
-                failure: function(data) {
-                    alert('Got an error! Please Try Later.');
-                }
+                    },
+                    failure: function(data) {
+                        alert('Got an error! Please Try Later.');
+                    }
 
-            });
-            alert('Booking Successful.');
-            window.location.href = '/';
+                });
 
+                alert('Booking Successful. Go to Your Booking List For Payment Details and Pay to Confirm Your Ticket(s).');
+                window.location.href = '/';
+            }
         }
     </script>
-
 </body>
 {% endblock %}
 

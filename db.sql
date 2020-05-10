@@ -1082,7 +1082,7 @@ COPY public.main_seat (id, booking_id, occupied, date, start_point, destination,
 53	ldujso	19	2020-05-12	Bijoy Sarani	Mogbazar	10:00 AM
 54	knldsn	6	2020-05-10	Motijheel	Rampura Bridge	10:30 PM
 55	knldsn	6	2020-05-10	Mogbazar	Rampura Bridge	10:30 PM
-56	knldsn	6	2020-05-10	Mouchak	Rampura Bridge	10:30 PM
+56	knldsn	6	2020-05-11	Mouchak	Rampura Bridge	10:30 PM
 57	knldsn	19	2020-05-10	Motijheel	Rampura Bridge	10:30 PM
 58	knldsn	19	2020-05-10	Mogbazar	Rampura Bridge	10:30 PM
 59	knldsn	19	2020-05-10	Mouchak	Rampura Bridge	10:30 PM

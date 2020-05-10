@@ -1,0 +1,257 @@
+<!DOCTYPE html> {% extends 'header.html' %} {% load static %} {% block body %}
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking List</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        body {
+            background-color: #F44336;
+        }
+        
+        .full-content {
+            display: flex;
+            width: 95%;
+            margin: 0 auto;
+            filter: blur(0);
+            position: relative;
+            font-size: 15px;
+        }
+        
+        .table th,
+        .table td {
+            text-align: center;
+        }
+        
+        .table input {
+            background: none;
+            border: none;
+            color: white;
+            text-align: center;
+            max-width: 100px;
+        }
+        
+        .table button {
+            background: none;
+            border: none;
+            text-align: center;
+        }
+        
+        .blur>*:not(#toast-not-blur) {
+            filter: blur(4px);
+            -webkit-filter: blur(4px);
+            -moz-filter: blur(4px);
+            -o-filter: blur(4px);
+            -ms-filter: blur(4px);
+            cursor: wait;
+        }
+        
+        .toast-area {
+            width: 0;
+        }
+        
+        .overlay {
+            position: fixed;
+            display: none;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: -1;
+            cursor: not-allowed;
+        }
+        
+        #bkash-info,
+        #rocket-info {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="row justify-content-center">
+        <button type="button" class="btn btn-outline-light mt-5" data-toggle="modal" data-target="#myModal">Payment</button>
+    </div>
+
+
+    <div class="modal fade" id="myModal">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h4 class="modal-title">Pay With Bkash or Rocket</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+
+                </div>
+
+                <div class="modal-body">
+                    <div class="method row justify-content-center">
+                        <button class="mr-2" type="button" id="bkash"><img src="{% static 'img/bkash.png' %}" width="50px" height="50px" alt="bkash"></button>
+                        <button type="button" id="rocket"><img src="{% static 'img/rocket.png' %}" width="50px" height="50px" alt=""></button>
+                    </div>
+                    <br>
+                    <div id="bkash-info">
+                        <h6 class="text-info">Please use the following steps to pay now!</h6>
+                        <p>1. Go to bKash Menu by dialing *247# <br> 2. Choose 'Payment' option by pressing '3' <br> 3. Enter our Merchant wallet number : 01XXXXXXXXX <br> 4. Enter BDT. amount you have to pay : xxxx <br> 5. Enter a reference against your
+                            payment : Your Booking ID
+                            <br> 6. Enter the counter number : 1 <br> 7. Now enter your PIN to confirm: xxxx <br> <i class="text-success"> Done! You will get a confirmation SMS.</i> </p>
+
+                    </div>
+                    <div id="rocket-info">
+                        <h6 class="text-info">Please use the following steps to pay now!</h6>
+                        <p>1. Go to rocket Menu by dialing *322# <br> 2. Choose “Merchant Pay by press 8” <br> 3. Enter our Merchant wallet number : 01XXXXXXXXX <br> 4. Enter Your <strong>Booking ID</strong> as reference. <br> 5. Enter the Invoice Amount
+                            (Booking Cost)
+                            <br> 6. Now enter your DBBL Rocket Mobile Menu PIN to confirm <br> <i class="text-success"> Done! You will get a confirmation SMS.</i> </p>
+
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+
+                    <button type="button" class="btn btn-success" data-dismiss="modal">Ok</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <script>
+        $("#bkash").click(function() {
+            $('#rocket-info').fadeOut("fast");
+            $('#bkash-info').fadeIn("fast");
+        });
+
+        $("#rocket").click(function() {
+            $('#bkash-info').fadeOut("fast");
+            $('#rocket-info').fadeIn("fast");
+        });
+    </script>
+    <div class="full-content justify-content-around mt-2" id="test">
+        <table class="table table-striped table-dark">
+            <thead>
+                <tr>
+                    <th scope="col">Booking ID</th>
+                    <th scope="col">Passenger Type</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Start Point</th>
+                    <th scope="col">Destination</th>
+                    <th scope="col">No. of Tickets</th>
+                    <th scope="col">Cost(BDT)</th>
+                    <th scope="col">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for object in all_booking %}
+                <tr>
+                    {% csrf_token %}
+                    <td>{{ object.id }}</td>
+                    <td style="text-transform: capitalize;">{{ object.class_type }}</td>
+                    <td>{{ object.date|date:'Y-m-d' }}</td>
+                    <td>{{ object.time }}</td>
+                    <td>{{ object.start_point }}</td>
+                    <td>{{ object.destination }}</td>
+                    <td>{{ object.tickets }}</td>
+                    <td>{{ object.cost }}</td>
+                    <td style="text-transform: capitalize;">{{ object.status}}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <div id="toast-not-blur" aria-live="polite" aria-atomic="true" class="d-flex justify-content-center align-items-center toast-area position-absolute" style="min-height: 200px;">
+            <!-- Then put toasts within -->
+            <div class="toast" data-autohide="false" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-header">
+                    <strong class="mr-auto text-primary">Remove Reservation</strong>
+                    <button type="button" class="ml-2 mb-1 close" onclick="cancel()" data-dismiss="toast">&times;</button>
+                </div>
+                <div class="toast-body">
+                    <p>Are You Sure to Remove This Reservation? </p>
+                    <div class="confirm d-flex justify-content-end">
+                        <button type="button" onclick="cancel()" data-dismiss="toast" class="btn btn-outline-primary btn-sm">Cancel</button>
+                        <button type="button" onclick="confirm()" data-dismiss="toast" class="btn btn-outline-danger btn-sm ml-2">Yes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+<script>
+    var start_point;
+    var destination;
+    var date;
+    var time;
+    var class_type;
+    var cost;
+    var id;
+    var number;
+    var $row;
+    $(".remove_btn").click(function() {
+        $row = $(this).closest("tr");
+        id = $row.find("td:nth-child(3)").text();
+        number = $row.find("td:nth-child(4)").text();
+        class_type = $row.find("td:nth-child(5)").text();
+        date = $row.find("td:nth-child(6)").text();
+        time = $row.find("td:nth-child(7)").text();
+        start_point = $row.find("td:nth-child(8)").text();
+        destination = $row.find("td:nth-child(9)").text();
+        cost = $row.find("td:nth-child(11)").text();
+
+    });
+
+    function remove_reservation() {
+        var reservation = document.getElementById("test");
+        reservation.classList.add("blur");
+        var toast_area = document.getElementById("toast-not-blur");
+        toast_area.classList.remove("toast-area");
+        $(".remove_btn").prop("disabled", true);
+        $('.toast').toast('show');
+    }
+
+    function cancel() {
+        var reservation = document.getElementById("test");
+        reservation.classList.remove("blur");
+        $('.remove_btn').button('enable');
+        $('.toast').toast('hide');
+        $(".remove_btn").prop("disabled", false);
+    }
+
+    function confirm() {
+        $.ajax({
+            url: '/cancel_reservation_admin/',
+            type: 'POST',
+            data: {
+                'id': id,
+                'number': number,
+                'start_point': start_point,
+                'destination': destination,
+                'date': date,
+                'time': time,
+                'cost': cost,
+                'class_type': class_type,
+            },
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            success: function(data) {
+                //
+            },
+            failure: function(data) {
+                alert('Got an error! Please Try Later.');
+            }
+
+        });
+        $row.remove();
+        var reservation = document.getElementById("test");
+        reservation.classList.remove("blur");
+        $(".remove_btn").prop("disabled", false);
+        $('.toast').toast('hide');
+    }
+</script>
+{% endblock %}
+
+</html>

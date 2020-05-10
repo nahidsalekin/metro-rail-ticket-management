@@ -15,6 +15,7 @@ class user(models.Model):
     age = models.IntegerField()
     number = models.CharField(max_length=20)
     password = models.CharField(max_length=20)
+    image = models.FileField(upload_to='profile_images', default='logo.jpg')
     def __str__(self):
         return self.fullname
 
@@ -22,6 +23,7 @@ class location(models.Model):
     name = models.CharField(max_length=100)
     lattitude = models.FloatField()
     longitude = models.FloatField()
+    serial = models.IntegerField(default=1)
     def __str__(self):
         return self.name    
 
@@ -43,23 +45,17 @@ class booking(models.Model):
     class_type = models.CharField(max_length=20)
     tickets = models.IntegerField()
     cost = models.FloatField()
+    status = models.CharField(max_length=20,default='unpaid')
     def __str__(self):
         return self.number      
+            
 
-class seat_list(models.Model):
+class seat(models.Model):
+    booking_id = models.CharField(max_length=50)
     occupied = models.IntegerField()
     date = models.DateField()
     start_point = models.CharField(max_length=50)
     destination = models.CharField(max_length=50)
     time = models.CharField(max_length=50)
     def __str__(self):
-        return self.destination
-
-class routes(models.Model):
-    id = models.AutoField(primary_key=True)
-    start_point = models.CharField(max_length=50)
-    destination = models.CharField(max_length=50)
-    distance = models.FloatField()
-    price = models.FloatField()
-    def __str__(self):
-        return self.start_point+" to "+self.destination              
+        return self.start_point

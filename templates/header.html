@@ -28,14 +28,18 @@
         }
         
         ul li a {
-            border-right: 1px solid white;
+            border-right: 2px solid white;
             padding: 0 5px;
             margin-right: 5px;
+            font-size: 18px;
         }
+        /* ul li:hover a {
+        } */
         
         ul li:last-child a {
             margin-right: 0px;
             border-right: none;
+            background: none;
         }
         
         .navbar-dark .navbar-nav .nav-link {
@@ -46,8 +50,29 @@
             padding: 0px 2px;
         }
         
-        #logout {
-            /* display: none; */
+        .dropdown {
+            top: -5px;
+        }
+        
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            color: black;
+            background-color: #ffff;
+            box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+        }
+        
+        .dropdown-menu a {
+            color: black;
+        }
+        
+        .dropdown-menu a:hover {
+            background-color: #ddd;
+        }
+        
+        .dropdown:hover .dropdown-menu {
+            display: block;
         }
         
         @media only screen and (max-width: 770px) {
@@ -56,6 +81,10 @@
             }
             .navbar-brand {
                 font-size: 25px;
+            }
+            .dropdown-menu {
+                left: 0;
+                right: auto;
             }
         }
     </style>
@@ -68,6 +97,8 @@
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#collapsibleNavbar">
     <span class="navbar-toggler-icon"></span>
   </button>
+
+
         <div class="collapse navbar-collapse" id="collapsibleNavbar">
             <ul class="navbar-nav ml-auto p-2 bd-highlight">
 
@@ -96,10 +127,12 @@
                 {% if request.session.username %}
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbardrop" data-toggle="dropdown">
-                        <i class="fa fa-user-circle-o" style="font-size:20px"></i>
+                        <img src="{{request.session.image}}" alt="{{request.session.username}}" width="40" height="40" class="rounded-circle">
+                        <caption style="text-transform: capitalize;">{{request.session.username}}</caption>
                     </a>
-                    <div class="dropdown-menu" style="position: sticky;">
-                        <a class="dropdown-item" href="{% url 'profile' %}">Profile</a> {% if request.session.username == "admin" %}
+                    <div class="dropdown-menu dropdown-menu-right" style="position: absolute;">
+                        <a class="dropdown-item" href="{% url 'profile' %}">Profile</a>
+                        <a class="dropdown-item" href="{% url 'my_booking' %}">My Booking List</a> {% if request.session.username == "admin" %}
                         <a class="dropdown-item" href="{% url 'location' %}">Station</a>
                         <a class="dropdown-item" href="{% url 'ticket_info' %}">Ticket Details</a>
                         <a class="dropdown-item" href="{% url 'booking_list' %}">All Reservations</a>

@@ -195,8 +195,11 @@
     background: none;
 }
 
-@media only screen and (max-width:769px) {
+@media only screen and (max-width:670px) {
     .section .section-center {
         top: 70%;
+    }
+    .booking-form .form-header h1 {
+        margin-top: 25%;
     }
 }

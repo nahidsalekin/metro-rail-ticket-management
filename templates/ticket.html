@@ -525,6 +525,7 @@
         }
 
         function preferable() {
+
             var time = $('#time').find(":selected").val();
             var date = document.getElementById("date").value;
             var start_point = document.getElementById("start_point").value;
@@ -542,36 +543,41 @@
             }
             var seat_choose = $('#seat_choose').find(":selected").val();
             if (seat_choose == "custom") {
-                $.ajax({
-                    url: '/occupied_seat/',
-                    type: 'POST',
-                    data: {
-                        'start_point': start_point,
-                        'destination': destination,
-                        'date': date,
-                        'time': time,
-                    },
-                    dataType: "json",
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token }}'
-                    },
-                    success: function(data) {
-                        data = JSON.parse(data);
-                        occupied_seat = data;
-                        for (var i = 0; i < data.length; i++) {
-                            if (data[i] > 25) {
-                                $(item2[data[i] - 26]).addClass("unavailable-seat");
-                            } else {
-                                $(item1[data[i]]).addClass("unavailable-seat");
+                if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                    alert('This Feature is only available on PC.');
+                    window.location.href = '/check_ticket';
+                } else {
+                    $.ajax({
+                        url: '/occupied_seat/',
+                        type: 'POST',
+                        data: {
+                            'start_point': start_point,
+                            'destination': destination,
+                            'date': date,
+                            'time': time,
+                        },
+                        dataType: "json",
+                        headers: {
+                            'X-CSRFToken': '{{ csrf_token }}'
+                        },
+                        success: function(data) {
+                            data = JSON.parse(data);
+                            occupied_seat = data;
+                            for (var i = 0; i < data.length; i++) {
+                                if (data[i] > 25) {
+                                    $(item2[data[i] - 26]).addClass("unavailable-seat");
+                                } else {
+                                    $(item1[data[i]]).addClass("unavailable-seat");
+                                }
                             }
+                        },
+                        failure: function(data) {
+                            alert('Got an error! Please Try Later.');
                         }
-                    },
-                    failure: function(data) {
-                        alert('Got an error! Please Try Later.');
-                    }
-                });
+                    });
 
-                $(".seat").fadeIn("slow");
+                    $(".seat").fadeIn("slow");
+                }
 
             } else
                 $(".seat").fadeOut("slow");

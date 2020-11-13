@@ -78,12 +78,12 @@ WSGI_APPLICATION = 'metrorail.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
+        'ENGINE': 'django.db.backends.mysql',
         'NAME': 'metro_rail',
-        'USER': 'postgres',
-        'PASSWORD': 'khan1998',
-        'HOST': '127.0.0.1',
-        'PORT': '5432',
+        'USER': 'nahid',
+        'PASSWORD': 'Khan@1998',
+        'HOST': 'localhost',
+        'PORT': '3306',
     }
 }
 
@@ -122,6 +122,8 @@ USE_L10N = False
 
 USE_TZ = True
 DATETIME_FORMAT = 'Y-m-d'
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
